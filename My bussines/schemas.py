@@ -6,6 +6,8 @@ from datetime import datetime
 # -------- Chat --------
 
 class ChatMeta(BaseModel):
+    session_id: Optional[str] = None
+    lead_id: Optional[int] = None
     page_url: Optional[str] = None
     country: Optional[str] = None
     language: Optional[str] = None
@@ -30,6 +32,12 @@ class ChatResponse(BaseModel):
 
 class LeadSummary(BaseModel):
     id: int
+    name: Optional[str] = None
+    email: Optional[str] = None
+    visitor_ip: Optional[str] = None
+    last_seen_at: Optional[datetime] = None
+    time_on_site_seconds: Optional[int] = None
+    messages_count: Optional[int] = None
     created_at: datetime
     country: Optional[str]
     language: Optional[str]
