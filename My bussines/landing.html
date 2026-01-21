@@ -39,7 +39,8 @@
       position:fixed; inset:0;
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.22'/%3E%3C/svg%3E");
       mix-blend-mode:overlay;
-      opacity:.16;
+      background-repeat:no-repeat; background-size:cover; filter: blur(0.8px);
+      opacity:.12;
       pointer-events:none;
     }
     a{color:inherit; text-decoration:none}
@@ -104,11 +105,11 @@
     .orb{
       position:absolute; left:50%; top:52%;
       transform:translate(-50%,-50%);
-      width:250px; height:250px; border-radius:50%;
+      width:320px; height:320px; border-radius:50%;
       background: radial-gradient(circle at 35% 30%, rgba(255,255,255,.40), rgba(255,255,255,.03) 42%, rgba(74,163,255,.18) 62%, rgba(77,243,255,.10) 76%, rgba(0,0,0,0) 78%),
                   conic-gradient(from 210deg, rgba(77,243,255,.45), rgba(74,163,255,.35), rgba(183,162,255,.30), rgba(77,243,255,.45));
       filter: saturate(1.1);
-      box-shadow: 0 0 60px rgba(74,163,255,.22), 0 0 160px rgba(77,243,255,.12);
+      box-shadow: 0 0 90px rgba(74,163,255,.30), 0 0 220px rgba(77,243,255,.18), 0 0 420px rgba(183,162,255,.10);
       border:1px solid rgba(255,255,255,.10);
       overflow:hidden;
     }
@@ -133,6 +134,7 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     @keyframes swirl{to{transform:rotate(-360deg)}}
     .rays{
+
       position:absolute; left:50%; top:52%;
       transform:translate(-50%,-50%);
       width:520px; height:520px;
@@ -141,6 +143,18 @@
       filter: blur(.2px);
     }
 
+
+    .rays path{
+      fill:none;
+      stroke: rgba(77,243,255,.45);
+      stroke-width:2;
+      stroke-linecap:round;
+      filter: drop-shadow(0 0 10px rgba(77,243,255,.35));
+      stroke-dasharray: 6 10;
+      animation: rayMove 6s linear infinite;
+    }
+    .rays g{ opacity:.9; }
+    @keyframes rayMove{ from{ stroke-dashoffset:0 } to{ stroke-dashoffset:-160 } }
     .card{
       position:absolute;
       width:240px;
@@ -225,7 +239,8 @@
       .card{position:relative; width:auto; margin:10px 0}
       .c1,.c2,.c3,.c4{left:auto; right:auto; top:auto; bottom:auto}
       .orb{top:220px}
-      .rays{top:220px}
+      .rays{
+top:220px}
     }
   
 
