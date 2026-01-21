@@ -4,14 +4,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 import os
-from datetime import datetime
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
 from database import Base, engine, get_db
-from models import Business, FAQ
-from schemas import ChatRequest, ChatResponse, LeadSummary, LeadDetail
+from models import Business, FAQ, Lead, Message
+from schemas import ChatRequest, ChatResponse, LeadSummary, LeadDetail, MessageOut
 import crud
 
 load_dotenv()
@@ -80,66 +79,6 @@ def detect_topics(text: str) -> List[str]:
     return topics
 
 
-
-# ---------- analytics helpers ----------
-
-def get_client_ip(request: Request) -> str | None:
-    # Render passes client ip in X-Forwarded-For
-    xff = request.headers.get("x-forwarded-for")
-    if xff:
-        return xff.split(",")[0].strip()
-    if request.client:
-        return request.client.host
-    return None
-
-def now_iso() -> str:
-    return datetime.utcnow().isoformat() + "Z"
-
-
-
-# ---------- session lifecycle (for real analytics) ----------
-
-@app.post("/session/start")
-def session_start(payload: ChatRequest, request: Request, db: Session = Depends(get_db)):
-    # Create a lead for this browsing session and return lead_id.
-    business = crud.get_business(db, payload.business_id)
-    if not business:
-        raise HTTPException(status_code=404, detail="Business not found")
-
-    meta = payload.meta.dict() if payload.meta else {}
-    meta["session_id"] = (payload.meta.session_id if payload.meta else None) or meta.get("session_id")
-    meta["page_url"] = meta.get("page_url") or (payload.meta.page_url if payload.meta else None)
-    meta["country"] = meta.get("country") or (payload.meta.country if payload.meta else None)
-    meta["language"] = meta.get("language") or (payload.meta.language if payload.meta else None)
-    meta["visitor_ip"] = get_client_ip(request)
-    meta["user_agent"] = request.headers.get("user-agent")
-    meta["referer"] = request.headers.get("referer")
-    meta["started_at"] = now_iso()
-    meta["last_seen_at"] = now_iso()
-    meta.setdefault("time_on_site_seconds", 0)
-    meta.setdefault("messages_count", 0)
-
-    lead = crud.create_empty_lead(db=db, business_id=payload.business_id, meta=meta)
-    return {"lead_id": lead.id}
-
-@app.post("/session/end")
-def session_end(payload: dict, request: Request, db: Session = Depends(get_db)):
-    lead_id = payload.get("lead_id")
-    duration = payload.get("duration_seconds")
-    if not lead_id:
-        raise HTTPException(status_code=400, detail="lead_id required")
-    lead = crud.get_lead(db, lead_id=lead_id)
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
-    meta = lead.meta or {}
-    meta["last_seen_at"] = now_iso()
-    if isinstance(duration, (int, float)) and duration >= 0:
-        meta["time_on_site_seconds"] = int(meta.get("time_on_site_seconds") or 0) + int(duration)
-    lead.meta = meta
-    db.add(lead)
-    db.commit()
-    return {"ok": True}
-
 # ---------- /chat ----------
 
 @app.post("/chat", response_model=ChatResponse)
@@ -206,26 +145,40 @@ Here are some FAQ entries for context:
     topics = detect_topics(user_message)
     detected_language = None  # میشه بعداً با متد جدا تشخیص داد
 
-    lead_id = payload.meta.lead_id if payload.meta else None
-    if lead_id:
-        lead = crud.append_messages_to_lead(
+    # Reuse lead_id for a continuous conversation (real inbox experience)
+    lead = None
+    if payload.lead_id:
+        existing = db.query(Lead).filter(Lead.id == payload.lead_id, Lead.business_id == payload.business_id).first()  # type: ignore
+        if existing:
+            lead = crud.append_message_to_lead(
+                db=db,
+                lead=existing,
+                chat_req=payload,
+                answer=answer,
+                detected_language=detected_language,
+                topics=topics,
+            )
+
+    if lead is None:
+        lead = crud.create_lead_with_messages(
             db=db,
-            lead_id=lead_id,
-            business_id=payload.business_id,
-            user_message=user_message,
+            chat_req=payload,
             answer=answer,
             detected_language=detected_language,
             topics=topics,
-            request=request,
         )
-    else:
-        lead = crud.create_lead_with_messages(
-        db=db,
-        chat_req=payload,
-        answer=answer,
-        detected_language=detected_language,
-        topics=topics,
-    )
+
+    # Store basic request analytics (real, not fake)
+    try:
+        meta = lead.meta or {}
+        meta["ip"] = request.client.host if request.client else None
+        meta["user_agent"] = request.headers.get("user-agent")
+        meta["referer"] = request.headers.get("referer")
+        lead.meta = meta
+        db.commit()
+        db.refresh(lead)
+    except Exception:
+        db.rollback()
 
     return ChatResponse(
         answer=answer,
@@ -234,31 +187,6 @@ Here are some FAQ entries for context:
         topics=topics,
     )
 
-
-
-def serialize_lead(lead, db: Session):
-    meta = lead.meta or {}
-    # messages_count: count messages for this lead
-    try:
-        msg_count = db.query(Message).filter(crud.Message.lead_id == lead.id).count()
-    except Exception:
-        msg_count = None
-    return {
-        "id": lead.id,
-        "created_at": lead.created_at,
-        "name": lead.name,
-        "email": lead.email,
-        "country": lead.country,
-        "language": lead.language,
-        "topic": lead.topic,
-        "last_question": lead.last_question,
-        "last_answer": lead.last_answer,
-        "source_page": lead.source_page,
-        "visitor_ip": meta.get("visitor_ip"),
-        "last_seen_at": meta.get("last_seen_at"),
-        "time_on_site_seconds": meta.get("time_on_site_seconds"),
-        "messages_count": msg_count if msg_count is not None else meta.get("messages_count"),
-    }
 
 # ---------- /leads ----------
 
@@ -271,7 +199,7 @@ def list_leads(
     db: Session = Depends(get_db),
 ):
     leads = crud.list_leads_for_business(db, business_id=business_id, limit=limit, offset=offset)
-    return [serialize_lead(l, db) for l in leads]
+    return leads
 
 
 # Convenience route for the inbox UI which calls /leads/<business_id>
@@ -287,6 +215,17 @@ def list_leads_path(
 
 
 
+
+
+@app.get("/lead/{lead_id}", response_model=LeadDetail)
+def lead_detail(lead_id: int, db: Session = Depends(get_db)):
+    lead = db.query(Lead).filter(Lead.id == lead_id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    messages = db.query(Message).filter(Message.lead_id == lead_id).order_by(Message.created_at.asc()).all()
+    return LeadDetail(lead=lead, messages=messages)
+
+
 # Compatibility redirects (so old links like /widget.html keep working)
 @app.get("/widget.html", include_in_schema=False)
 def widget_html_redirect():
@@ -295,18 +234,3 @@ def widget_html_redirect():
 @app.get("/inbox.html", include_in_schema=False)
 def inbox_html_redirect():
     return RedirectResponse(url="/inbox", status_code=302)
-
-
-@app.get("/lead/{lead_id}", response_model=LeadDetail)
-def get_lead_detail(lead_id: int, db: Session = Depends(get_db)):
-    lead = crud.get_lead(db, lead_id)
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
-
-    data = serialize_lead(lead, db)
-    messages = crud.list_messages_for_lead(db, lead_id)
-    data["messages"] = [
-        {"role": m.role, "content": m.content, "created_at": m.created_at}
-        for m in messages
-    ]
-    return data
