@@ -227,7 +227,165 @@
       .orb{top:220px}
       .rays{top:220px}
     }
-  </style>
+  
+
+    /* ===== v7: richer crypto-glass visuals ===== */
+    body:before{
+      content:"";
+      position:fixed; inset:0;
+      background:
+        radial-gradient(1000px 700px at 55% 20%, rgba(74,163,255,.22), transparent 60%),
+        radial-gradient(900px 650px at 35% 75%, rgba(77,243,255,.14), transparent 62%),
+        radial-gradient(900px 800px at 10% 10%, rgba(183,162,255,.12), transparent 60%),
+        radial-gradient(1200px 900px at 80% 90%, rgba(74,163,255,.10), transparent 65%);
+      animation:bgShift 10s ease-in-out infinite alternate;
+      pointer-events:none;
+      z-index:-2;
+    }
+    body:after{
+      content:"";
+      position:fixed; inset:0;
+      background-image:
+        radial-gradient(rgba(255,255,255,.06) 1px, transparent 1px);
+      background-size: 38px 38px;
+      opacity:.22;
+      filter: blur(.2px);
+      pointer-events:none;
+      z-index:-1;
+      mask-image: radial-gradient(closest-side at 55% 35%, rgba(0,0,0,.0), rgba(0,0,0,1));
+      -webkit-mask-image: radial-gradient(closest-side at 55% 35%, rgba(0,0,0,.0), rgba(0,0,0,1));
+    }
+    @keyframes bgShift{
+      from{transform:translate3d(0,0,0) scale(1)}
+      to{transform:translate3d(0,-10px,0) scale(1.02)}
+    }
+
+    .orb{
+      width: 320px; height:320px;
+      border-radius:999px;
+      position:absolute;
+      left:50%; top:50%;
+      transform: translate(-50%,-50%);
+      background:
+        radial-gradient(circle at 35% 30%, rgba(255,255,255,.55), rgba(255,255,255,0) 38%),
+        radial-gradient(circle at 60% 65%, rgba(77,243,255,.30), rgba(77,243,255,0) 48%),
+        conic-gradient(from 220deg, rgba(77,243,255,.0), rgba(74,163,255,.55), rgba(183,162,255,.25), rgba(77,243,255,.55), rgba(77,243,255,0));
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,.10) inset,
+        0 0 90px rgba(74,163,255,.35),
+        0 0 140px rgba(77,243,255,.22);
+      filter: saturate(1.2) contrast(1.1);
+      animation: orbFloat 6s ease-in-out infinite;
+    }
+    .orb::before{
+      content:"";
+      position:absolute; inset:-18px;
+      border-radius:999px;
+      background: radial-gradient(circle at 50% 50%, rgba(74,163,255,.25), rgba(74,163,255,0) 60%);
+      filter: blur(10px);
+      animation: pulse 2.6s ease-in-out infinite;
+    }
+    .orb::after{
+      content:"";
+      position:absolute; inset:14px;
+      border-radius:999px;
+      background:
+        radial-gradient(circle at 30% 25%, rgba(255,255,255,.55), rgba(255,255,255,0) 45%),
+        radial-gradient(circle at 55% 58%, rgba(0,0,0,.20), rgba(0,0,0,0) 55%);
+      mix-blend-mode: overlay;
+      opacity:.8;
+    }
+    @keyframes orbFloat{
+      0%,100%{transform:translate(-50%,-50%) translateY(0) scale(1)}
+      50%{transform:translate(-50%,-50%) translateY(-10px) scale(1.01)}
+    }
+    @keyframes pulse{
+      0%,100%{opacity:.55; transform:scale(1)}
+      50%{opacity:.95; transform:scale(1.03)}
+    }
+    .rays g path{
+      stroke-linecap:round;
+      filter: drop-shadow(0 0 10px rgba(77,243,255,.35));
+      stroke-dasharray: 240;
+      stroke-dashoffset: 240;
+      animation: rayDraw 2.4s ease forwards;
+    }
+    .rays g path:nth-child(2){animation-delay:.15s}
+    .rays g path:nth-child(3){animation-delay:.25s}
+    .rays g path:nth-child(4){animation-delay:.35s}
+    @keyframes rayDraw{to{stroke-dashoffset:0}}
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+    .card:hover{
+      transform: translateY(-2px);
+      box-shadow: 0 22px 80px rgba(0,0,0,.60), 0 0 0 1px rgba(77,243,255,.14) inset;
+    }
+
+    /* Pricing */
+    .pricing-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:18px;
+      margin-top:18px;
+    }
+    @media (max-width: 980px){
+      .pricing-grid{grid-template-columns:1fr}
+    }
+    .price-card{
+      position:relative;
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.12);
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      padding:18px;
+      overflow:hidden;
+    }
+    .price-card::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(600px 220px at 50% -20%, rgba(74,163,255,.25), transparent 60%);
+      opacity:.9;
+      pointer-events:none;
+    }
+    .price-card.featured{
+      border-color: rgba(77,243,255,.28);
+      box-shadow: 0 24px 90px rgba(0,0,0,.62), 0 0 60px rgba(77,243,255,.14);
+      transform: translateY(-6px);
+    }
+    .badge{
+      position:absolute; top:14px; right:14px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(77,243,255,.12);
+      color: rgba(234,240,255,.92);
+    }
+    .pc-top{position:relative; z-index:1}
+    .pc-top h3{margin:0 0 10px; font-size:18px}
+    .pc-price{display:flex; align-items:flex-end; gap:6px}
+    .pc-cur{opacity:.8}
+    .pc-val{font-size:44px; font-weight:800; letter-spacing:-.03em}
+    .pc-per{opacity:.75; margin-bottom:8px}
+    .pc-note{margin-top:6px; color:var(--muted2); font-size:13px}
+    .pc-list{list-style:none; padding:0; margin:16px 0 16px; display:grid; gap:10px; position:relative; z-index:1}
+    .pc-list li{display:flex; gap:10px; align-items:flex-start; color: rgba(234,240,255,.84)}
+    .tick{width:16px; height:16px; border-radius:6px; margin-top:2px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.55), rgba(255,255,255,0) 55%),
+                  linear-gradient(135deg, rgba(77,243,255,.35), rgba(74,163,255,.25));
+      box-shadow: 0 0 18px rgba(77,243,255,.18);
+      border:1px solid rgba(255,255,255,.12);
+      flex:0 0 auto;
+    }
+    .pc-cta{width:100%; justify-content:center}
+    .pricing-foot{margin-top:10px}
+</style>
 </head>
 <body>
   <div class="nav">
@@ -238,6 +396,7 @@
       </a>
       <div class="nav-links">
         <a href="#features">Features</a>
+        <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
         <a href="/inbox?business_id=1">Inbox</a>
       </div>
@@ -318,7 +477,67 @@
       </div>
     </section>
 
-    <section id="faq" class="section">
+    <section 
+    <section id="pricing" class="section reveal">
+      <div class="section-head">
+        <h2>Pricing that scales with you</h2>
+        <p class="muted">Start simple. Upgrade when you see value. No hidden fees.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <div class="price-card">
+          <div class="pc-top">
+            <h3>Starter</h3>
+            <div class="pc-price"><span class="pc-cur">$</span><span class="pc-val">19</span><span class="pc-per">/mo</span></div>
+            <div class="pc-note">For solo founders & small sites</div>
+          </div>
+          <ul class="pc-list">
+            <li><span class="tick"></span>1 website widget</li>
+            <li><span class="tick"></span>Multi‑language replies</li>
+            <li><span class="tick"></span>Inbox + lead history</li>
+            <li><span class="tick"></span>Basic analytics</li>
+          </ul>
+          <a class="btn pc-cta" href="/widget">Try live demo</a>
+        </div>
+
+        <div class="price-card featured">
+          <div class="badge">Most popular</div>
+          <div class="pc-top">
+            <h3>Pro</h3>
+            <div class="pc-price"><span class="pc-cur">$</span><span class="pc-val">49</span><span class="pc-per">/mo</span></div>
+            <div class="pc-note">Best for growing businesses</div>
+          </div>
+          <ul class="pc-list">
+            <li><span class="tick"></span>Up to 3 websites</li>
+            <li><span class="tick"></span>Visitor context (IP, referrer)</li>
+            <li><span class="tick"></span>Tags + quick replies</li>
+            <li><span class="tick"></span>Engagement analytics</li>
+          </ul>
+          <a class="btn primary pc-cta" href="/widget">Start with Pro</a>
+        </div>
+
+        <div class="price-card">
+          <div class="pc-top">
+            <h3>Business</h3>
+            <div class="pc-price"><span class="pc-cur">$</span><span class="pc-val">99</span><span class="pc-per">/mo</span></div>
+            <div class="pc-note">For teams that need control</div>
+          </div>
+          <ul class="pc-list">
+            <li><span class="tick"></span>Unlimited websites</li>
+            <li><span class="tick"></span>Team inbox</li>
+            <li><span class="tick"></span>Advanced analytics</li>
+            <li><span class="tick"></span>Priority support</li>
+          </ul>
+          <a class="btn pc-cta" href="/inbox?business_id=1">Open inbox</a>
+        </div>
+      </div>
+
+      <div class="pricing-foot muted">
+        * Prices are placeholders for launch and can be adjusted. The live demo shows the real product.
+      </div>
+    </section>
+
+id="faq" class="section">
       <h2>Common questions</h2>
       <p class="lead">Auto-scrolling Q&A (hover to pause). No clipping, no cut-off.</p>
 
