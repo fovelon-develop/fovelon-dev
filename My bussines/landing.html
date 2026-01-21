@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AutoSupport AI – AI support & lead capture</title>
+  <title>Fovelon – AI support & lead capture</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -165,29 +165,6 @@
     }
 
     /* ---------- Floating soft messages in BACKGROUND ONLY ---------- */
-
-    .floating-copy {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 2;
-      font-size: 13px;
-      color: rgba(177, 198, 239, 0.3);
-    }
-
-    .floating-copy span {
-      position: absolute;
-      padding: 8px 14px;
-      border-radius: 999px;
-      background: rgba(5, 16, 42, 0.96);
-      border: 1px solid rgba(132, 168, 255, 0.25);
-      box-shadow: 0 0 30px rgba(20, 80, 200, 0.35);
-      opacity: 0;
-      transform: translate3d(0, 18px, 0);
-      animation: floatMsg 22s linear infinite;
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-    }
 
     .floating-copy span:nth-child(1) {
       left: 7%;
@@ -1061,6 +1038,49 @@
         justify-content: center;
       }
     }
+  
+    /* ---------- Brand logo ---------- */
+    .logo-img {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      object-fit: contain;
+      box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+    }
+
+    /* ---------- Pricing emphasis ---------- */
+    .pricing-card {
+      position: relative;
+    }
+    .pricing-card--popular {
+      border: 1px solid rgba(72, 192, 255, 0.55) !important;
+      box-shadow: 0 20px 60px rgba(72, 192, 255, 0.12);
+      transform: translateY(-6px);
+    }
+    .pricing-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      padding: 6px 10px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      color: rgba(7, 12, 24, 0.95);
+      background: linear-gradient(90deg, rgba(72,192,255,0.95), rgba(52,216,132,0.95));
+      box-shadow: 0 10px 26px rgba(0,0,0,0.35);
+    }
+
+    /* ---------- Mobile polish ---------- */
+    @media (max-width: 760px) {
+      .nav { gap: 12px; }
+      .nav-title-main { font-size: 14px; }
+      .hero-title { font-size: 36px; line-height: 1.05; }
+      .hero-subtitle { font-size: 15px; }
+      .pricing-card--popular { transform: none; }
+      .pricing-badge { top: 12px; right: 12px; }
+    }
+
   </style>
 </head>
 <body>
@@ -1075,23 +1095,14 @@
     <div class="bg-dot"></div>
     <div class="bg-dot"></div>
   </div>
-
-  <!-- floating soft messages in background -->
-  <div class="floating-copy">
-    <span>“Visitor from Berlin installed the widget in 4 minutes.”</span>
-    <span>“Lead from São Paulo asked about pricing – auto-tagged.”</span>
-    <span>“Coach in Toronto closed a client after 2 chat replies.”</span>
-    <span>“Team in Dubai sees all conversations in one inbox.”</span>
-  </div>
-
-  <main>
+<main>
     <div class="shell">
       <!-- NAV -->
       <header class="nav">
         <div class="nav-left">
-          <div class="logo-orb"></div>
+          <img class="logo-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAACzCAYAAAAgyDaKAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAA7EAAAOxAGVKw4bAAAZb0lEQVR4nO2du28bSbbGv+rmy2QPm+AQksYYgMqUSQIGWAMLj6hN7Mzjm2w2M9pg4vV/sLrxBlcbb7BabDYTrFbZOLkkLQgYAwZkZYouBSwEyaAJkqY4fDZvoG4tRfFR3V2vpvgDDElUs6qs/nj61KlTp8hgMMCCBfNCSPYA5oGjo6ONwWCQ8tOGruul3/72t+esxvRQIQsLTcfx8XG23++vWpa1CWAVgPN1lXFXJwCqAPIAqpqmnSzETs9C0GM4Pj7O9nq9zcFgsA1gGzfiVYETAHlCSD6RSOS/+uqrmuwBqcZC0LhxGSzLGhbwqtQB0VOCLfBQKJRfWPEHLOjj4+Nst9t9BWAHgC//VyFKAPbD4fD+QxX3gxN0sVj8fjAY7ODGEs8zB4SQg62trb/LHohIHoSg59Qa01IFcKDr+t7Tp0/fyx4Mb+Za0G/evMlZlrWL+bfGtJwQQvbm2WrPpaBtt2IXwZnciaZECNmdR2HPjaDfvXtnNhoNx61YlTuawFACsG8Yxt68hAADL2jbP94F8BIPzz9mRRXA3jwIO9CCLhQKfwKwK3scc0SVELKztbX1L9kD8UogBX10dLTR7/f3oc4K3i2hUAixWAyRSOT26yidTgfNZhPNZhOdTkfCKGeSD4fDO0GMZQdK0LafvAvgleyxODjCdcQbCrnL9+r1emg2m2i1Wmg2m5xG6YkqgL1cLvffsgfihsAI2g7B7UPyhE/TNMTjcRiGgVgsxrRty7JQr9dRr9dhWRbTtn1Q0jRt5+uvvy7IHggNygtaFascCoWQSqUQj8ehaRrXvhQV9p5hGLuqTxqVFrQKvrJhGFysMQ0KCvtE1/UdlVcclRW0vTiyBwmhuFAodCtktz4xDxxhV6tV2UMBbiIhr1RdlFFO0LaLsY+buLJQNE1DKpVCMpkU3TUVnU4H5XJZlcjIgWEYO6q5IEoJ2nYxDiBh4mcYBtLpNHf/2C+WZaFaraJer8seCgCUdF1/qZILooygbRdjX3S/kUgE6XRaio/sh2aziXK5rIRvbS/GKOGCKCHoQqHwRwB7IvtU3b2godfroVwuo9VqyR4KALzK5XJ/kT0I6YIuFAp/w01CkTCC4l7QUq1WVZkw7udyuT/IHIBUQYsWs6ZpWFpaCpx7QUOn08Hl5aUKLohUUUsRtB3J2INAMUciESwtLSkRhuOFZVm4vLxUIQqybxjGKxkREOGCtsWch8DFkkgkgpWVlblxMaZhWRYqlQoajYbsoZwYhrEtWtRCBS1DzIZhIJPJiOpOGRTxq4WLWqjJEi3mZDL5IMUMAKlUCplMRvZTadNeJBOGsP+tPQEUJuZMJoN0Oi2qOyUxDEMFV+ulfe+FIMTlEBnN0DQNmUwG8XhcRHeBQJHJopA4NXdBFwqF/4Gg1E9N07CysjJ2l8hDRwVRi1hR5CpokcvZCzHPRgVR67q+yTP3g5tzVSwWv1mIWS1U+Dv1+/380dHRBq/2uVhou7TACQTlMj9+/FgJMYfDYeoJWKfTgaxV2l6vh4uLC5mritzCeVyWzbrd7gEEiTmTyQgVMyHkzobY4X9ecBKLWq0WLMtCq9VCt9tlOeR7hEIhrKysyFwq37RXipkvkTO30CIngZlMBoZhcO1D1/U7u7pFfHgcYTv/eAlcgfwP5pEPpoK2/eYDZg1OgaeYCSHcdnZ7wSl10Gg0mItbtqhZTxKZCVqk35xOp7nkMUej0du9hKriiLter6Pf7zNps9Pp4OLigklbHqgahrHKyp9m5kOL8ptjsRhzMScSCSSTSSUmlrMIhUJIJpNIJpO3G2f9GqVIJIJMJoNyucxolK5INRqNAwC/Y9EYEwstqsacpmn48ssvmSzlEkKQTCaV2dntleFSB37vZblclpmlt8uiSpNvQduuRsnvQGhYWlpisqSdSCTmascKcOOKVKtVXF9f+2rn4uJC1sJLNRwOb/qtp+fbNHW73X2/bdBgGIZvMeu6jkwmw32i12638f79e5ydnY39vWmaWFtbw9raGrM+Q6EQMpkMUqkUKpUKfv31V0/tLC0tyYpRp7rd7h6A//LTiC8LLWpzaygUwuPHj31ZVNM0kUrxD40Xi0UUi0Wqa6PR6K2wWYobuIlrVyoVT1GRVquFy8tLpuOhRdO0bT919DwLWmRUY2VlxbNVJYQI2UfYbrfx448/4vzc2xPTNE3kcjmsr68zHVe5XPbkhtTrdVQqFaZjoaRkGMam16iHZ0EXCoV/QkB1o1Qq5dmy6rqOpaUl7tGL8/Nz/Pjjj2i3277bMk0Tz549Y2qxG40GPn786Pp9EieJnieIngQtagElEong8ePHnt4bDoeFJLefn5/jH//4B/N2X7x4wdRaOwsobu63zOy8cDi86mWC6Olu20UUueN1+1QikRC2U+Pw8JBbuyzbjkQi+PLLLxEOh6nf42yWkIF9bo5rXN/xYrH4PQTUnvO60GGaprC9dMViEbUav/2fp6eneP36NbP2NE3D48ePkUgkqN8TiUSETKbHsHN8fJx1+ybXd90+/48rTnFxt3z++efC/vi1Wo06muGHt2/f4vT0lGmbmUwGn3/+OfX1qVRKSk6LFyvtStBv3rzJQYB1dmthCSH44osvhOZg8HI1xvHzzz8zfxIYhoEvvvgChBCq6yXtIHdtpV2N0D5mmCvxeNyVNSCECN+FcXV15Tk854V2u41Cgf0RJ041KRq8PjX94tZKUwva/qRsuxyPK9xOQmSIGQDevxdfDvn09JSLvx6Lxajdj2QyKcP1cGWlqQXtddbpBjePNVliBjBxSZs3PKw0cON+0E4UZbgebrRHNTL7E7LjcTxUxGIx6lwN2WLmGdmYBk83J5PJ4NGjRzOvc3JGBENtpakE3e12d3wNhwI3fyTR+wiHkWWdgZvICovVyElkMhmqOHU8HhdeyIdWg7TPDqrGvOImJ/mzzz6TWhVJpqABcE0acsoc0EQ+JLgeOzQXzRxRsVj8BpxDdbSz53A4LL1eHU8LSQPv6AqtqDVNE32cx6odNp7KTEEPBoMdJsOZAK11drLmZCIyVDcJESVynYOUZpFKpYTu9rEsa2fWNVMFbTviXDPqaK1zOp0O9FYpVoiakNJGPgQ/MV++e/fOnHbBVEF3u12u9TXi8TiVSJ3d2LKRFd0YRmQR83Q6PdP1cLsQ5pPU9fX1VAM7y+XYYTeW+9D6YLL9ZgcFKuIL/VA5R9/NQuT9meUCTxS0nVXHba3TqUY0C9M0A1FeQBTRaFRof8lkcmafkUhE5ARxe1pMeqKgB4PBNpfh2NB88p1SA6qgwqRwZWVFeJ809yqVSgkL43W73Ylux7QRbLMfyg201jmZTM5VqYGgEovFZlppWveEEdsTxzHuRdukr3IaDLXVVck6q0I26zrnnQk09yKZTIqKRG1P+sVYQfd6vYlv8EsoFKJa6UskEgvrPAZZxSPj8Th0XZ95naA8j9SkouljFTMYDLidVkX7WJK07WcqKkQ5lpeXpfVNc09o3Um/9Pv97XGvTzKBYy/2i6ZpVNb50aNHSi6iqBCHluVyADeLLTR5HoKM0diJ4T1B2ysxXCw07SRvcSTbeExz6iKZEGjujSArvT3uxXtm8Pr6euyFLKBZ7SOEKLEq6Ifl5WV89913t5GBWq2Gw8ND32E/GSG7UZLJJFUlplQqxb2c2Js3b3KjZcPumUte/jNtElLQrfP6+jp++OGHO2Eu0zTx7bff+rawMt0Nh0gkQjU5FGGlLcvaHn1t3POfm7vB8joViUajeP78+cTf53Izsx+nwrqgo1do75EAX/qeVscJmvkonAN3ZkEICfQy9/Pnz6cuQKyvr3u20mtra0r40AB96FCAlb6n1XGC3mbdK+0nWoUDeqYx65FPI7iNDW9nTqpinYEbt4O2ngdnK709+sIdQc/KNfUKrV+suqBnwcvHjUajzMvs+kUVKz2q2TuCbjabzP1nN5O8oAuaV5xaJevs4OZe8YxajWr2jqAty5Im6KD7zwBdARovRWq8uik8cSPoeDzOLY1hVLOjvXCZENIQBDHPcil++eWXqbvCvVQ/Mk1TiXDdKG7uF+0KsUfuaHZU0Nsse3LOw6a9VnVmTXDa7TZ++ukn/PTTT3d2hzuVSn/++WfXfaponR3c1JrmKOjt4R+4Jky4+U8EIbOONjHo7OwMf/7zn5n0qbKg3dwzx+3gfboWVxW5EXQQLLToTLdsNqtM7Hkcbu+ZiJQGbhY6FAq59rOCwPLyMq6urqivz2az2NjYgGmauLq6clWRX2XrDLi/Z4ZhoF6vsx7G9vAP3ATtNgQXlJCdW0FvbW3dTuqy2SwuLy+pKvI7ZxiqTCwWczXJdeZUvV6P25hGP2LMwnZBEahb3K58jWbI0Yr0yZMnwnd4i4C328EtbDevgnYbQiuVSnd+fvv2LdX7VHc3AG/zHt6C5uJyhEIhVztOaPMCVMBtTvLr169Rq9VgmibOzs6ocqL9JDGJxMu8x5lbsTz78Pj4OOucachF0G6tcxAiHA7RaBTRaJS6CmmtVnN9NFsQrLMfYrEYU0H3+/1VAOcAp7DdvLobDjx3jmSzWSVXBifhZnHFgecmjoWgPcBTcEGzzl7cjlgsxi1My7xVt/5zEOGV42uapnJporxgafQIIbf1JZgLet6tM8DPQgfNOgPeTzRgqZOnT5/epjAqIWiegXYemKbJPAoRjUbx5MkTpm2qDC8/elTQeb8NeolY9Pt9v90Kh/UqXhAXUvwkGvFyTZlb6CCF4PzA0u0wTTOQ1tlv6I2HlWYq6KAkGLGApYV+9uxZ4KwzCxj50fnhH5gq0I91brVaDEciBhaiXltbUz4JaRJ+7xmPp/nCQvvAb4gtGo3i2bNnjEYTPET40Hk/jT1EC+0n2vHkyZNA5GxMgsU9YyDq/PAPo4L2VQDZz+B4b83hhdfJ3PLyMra2thiPRiws7hkDQd/R7B1Ba5p24qdlP4Njmawiko2NDdcTumg0it///vecRiSObrfruw2/gh7V7B1B67pe8tO4n8HJPkPbK9FoFN99952r9zx//jzQrgbAzgD5FfSoZu8I2skp9YrfwQXRjwZu3IcXL17MvM40TWxtbc1Fvgare+VXM6OaHdfaCTxsxWIR4Wi1WoHNBVlfX0c2m71T2Nw0TaRSKcRiMayvrwc2PDcORQR9z0Ue15qniSGLmGJQLbSDU9j8IaCIoO9pdZxZzfvpwQ9B9aMfGp1OB4PBgElbPgWdH33hnqAJISUvLbMKkjebTSbtLOBHo9GQPQQAACHknstxT9ChUCjvpfGFoB8OqtyjRCKRH33tnqDtWWNJwHjGosofa8F4Op0O03RfH774yVdffXWvys2k0ETebeusEk0Gg8FC1AqjirsB4GDci2MFTQjJu22dZWLSQtDqosq90TQtP/b1cS969aNZcX19HbhtWQ+BRqOhyu6i6uiBmw5jBe3Fj2YtQBUOil9wFx73xGOCU37SL6aFJvIAdmh7YC3o6+trpFIpZUsitNttnJ2doVQq4ezs7E4MPZvNYnl5GalUCsvLy6jValhbWwv0rhRe1tljTkh+0i8mqoUQkh8MBjteemNFuVxW4nzrYa6urnB4eDi1pO75+fm9GnbOru4gpoxaloVKpSJ7GLeEw+GxE0Jgyo6Vra2tv8NnfrRf2u22Usvhp6en+Otf/+qqPrRDu91GsVikrj6qEvV6ndnK4CgeLHR+WhLdrNDEPm0vvPKZVfGlX79+jcPDQybtTDspSzUsy+JRdf8Wt1ETQsj+tN9PFXQ4HN6j7YjXjpN2uy099vn27VumlvXw8JDbIZ2sqVQq3KyzlxBgIpGY6G4AMwRtm3Zfu1hYINNK12o1FApjI0SeabfbzNvkQa/Xw/X1Nbf2PQh6f9zq4DAzV0MIIVRWmqev2+/3pVnpw8NDLlmAXg7hFA1vQ+LB3ZhqnQEKQdsmnup/xnMxpFKpCF9sOT09paq47xUvxySLotlscrXOrVbLrZta3dra+tesi2YK2jbxMz8ZAF9BDwYDfPjwgVv74+A9efMSLRFBr9dDuVzm2ocXd4PmIqoEDF3XpbsdwM0uY5HxUN6PXFUiOKN8+PCB20TQwa2gdV3fp7mOStB2/d38rOtEuASfPn0SliDD24KqaKErlQqT8gTTaDQabrWSH64BPQ3qFDlN03ZnXSOqtka5XObelwixqXaWSqPRwKdPn7j2YVmW6ycTjfZur6W90M5uyk+7ptPpCFnZGwwGuLy8DGxxGgeVBN1qtfDx40fu/dTrddfWeVJm3ThcJTHPWqUBxCWAO6LmtaAj4qB6VQTd6XSETLi9rDq6sc6AS0Hb+R2ladd48I88w1vUvLPjVBC0ZVm4vLzkPgkEbvxzl/fKlXUGPJTTJYTszrpG5CJIt9vlJurV1VXmbTqoUD1JpJg7nY5rXbi1zoAHQdNY6Xq9LrSaaLfbxcXFBXOf+je/+Q3T9hyi0ShyuRyXtmnpdDq4uLjgHtFw8BBudW2dAY8Fz2dZacuyuAfmR+n3+7i8vGQ6KeV1qqvsutCNRgOXl5fCtlM1Gg3X9yUcDu946cuToG0rnZ92TbPZFJ4UPhgMcHV1xdTlYZ2QL7sudKVSwcePH4W4GcCNmD0Yt12vhUM9b9Wm+QTV63UpSUUfP35k9mFibaVlHUHh+Mu848zDeBRz1TAM6rTlUTwL2v4E7c66rlKpSIkXf/r0CR8+fGDiy7M4pSoajeLbb7+VEtlw/GWRtQM9ihmEkFezUkSnvt/vo6dQKPwfgNVp12iahnQ6DcMwfPXlhXA4jJWVFd91Q87OzvD69WtPKZ/ZbBYvXryQ4jc3Gg2uSfqT+vQ4h8rncrnf+enb95ZqTdN2LMvKT7vGmST2ej1uB79Potvt4t///jeWlpZ81Z5eW1vD6uoqfvnlF7x//55K2KZp4tmzZ1LqQjtLzCJdDMCXmD2F6UbxbaEBoFAo/A2UJQ8Mw0Amk/HdpxcSiQTS6TSTKk+1Wg1nZ2dotVr3cqbX1tZuSxnIoF6vo1qtCrXKTr8+5i77uVzuD37HwETQ7969MxuNRgkAlfmNRCJYWlqSUnODECLN/eFNo9FAtVoVXt3IeQL7yIIsGYax6cd3dmAiaAB48+ZNbpbrMYymaUgmk8JdEIdoNHp7XETQabVaqFarUgrGO3kgftIddF3fpE0PnQUzQQNAoVD4EygiH8OEQiFkMhlpwtJ1HalUKpAWu9PpoFKpSDv5wKeLAQAghOzY6xpMYCpoACgUCv8LYNvt++LxONLptLTSX4QQJJNJGIahbPkxh06ng3q9znXP3zQYuBgOTPzmYZjfOcMwXrrxpx2azSZarRaSySSSyaTwc8MHgwFqtRpqtRoePXqEeDyOeDyuzPnlTnJPs9mUWgG01WrdRqx8cmIYxisWYxqGuYUG3PvTozj+tQxhD0MIQTweRywWQywWE2q5LctCq9VCq9WSLmLgP+4No1yZajgc3vR7LuY4uAga8OZPj6JpGuLxuDJVSAkht+KORCIIhULMxuVs63dELCoLbha9Xg/VapVpCgMh5CVNSQJPbfOMVbqJT8/CMAxlhD2KrusIhUKIRCK3T5Th7x0sy7pNA+h0OrAsS9mj7HgIGWA/CbzXPu/gu9dJ4iQc31a0C/BQcLZJccppZz4JHIW7oO1Flzw8HLc8i0gkAsMwEI/HF+L2iRM5aTabvDZncBczIEDQAF9RO0QiEcRiMRiGwexErnmn1+uh0WiI2Ad6YhjGNouVwFkIETTgfnncD85kUkZ0QnUsy0Kz2fS0i8QjwsQMCBQ0ABwdHW30+/08BIh6GMd6O/9UiS3zZngSOixkgVR1Xd9mtaxNg1BBA/JEPcywsCORyNiIhKo40RHgbi3BSd9LRLiYAQmCBsT41F5w3BMnBOd85Umv17v1Xyd9PyzigCDUzRhGiqABdUU9DseSO18B3CZTjUuqcizk6CN/3PdziDQxAxIF7cBy8WWBdISE5qYh3XG0/wCed/kuUIY92WIGFLDQDsVi8fvBYLAvexwL3MN7OdsNyggauI2AHGDGLvIFylDSdf2l6EjGNJQSNHA7WdwH8FL2WBZM5cAwjB1Zk79JKCdoh0Kh8EfcpJ9Ki1cvGEsVwG4ul/uL7IGMQ1lBA7cuyD4CENp7IJzour6jkosxivQoxzSePn363jCMbSyiICqwZxiG8JU/tyhtoYext3XtYWGtRZPXNG3XS61mGQRG0A4L31oYVULIK1XCcbQETtAAcHx8nO12u3tYREJ4sWcYxq5qEQwaAiloB9sN2ccibs2KfDgc3uGxG1sUgRa0g73KuIuFsL0SKD95GnMhaAdb2K+wmDjScqJp2qt5ELLDXAnawXZFdsFwt/mcUSKE7AZtwkfDXArawRb2Kywmjw4nhJC9eRSyw1wL2sGOirwE8AoPz88uATgIh8N7QZ7s0fIgBD2MvZzuWO15jWVXAezrur6v+soeax6coIexJ5EvceNrB13cJQB5QsgBr7pxQeBBC3oY23I74t6WOxpqDgDkdV3PPzRLPImFoCdQLBa/GQwG27gRtyphwBPcxIwP5inUxpKFoCk5OjrasCxrczAYrOJG5KvgN8Es4T8uxImmaaWFBaZjIWgfvHv3zmw2m5uWZW3irg+ewmyrfoKbyRsAgBBSIoSUFpbXHwtBL5grlE7wX7DALQtBL5gr/h8Zx9G+En87bAAAAABJRU5ErkJggg==" alt="Fovelon logo" />
           <div class="nav-title">
-            <div class="nav-title-main">AutoSupport AI</div>
+            <div class="nav-title-main">Fovelon</div>
             <div class="nav-sub">AI-powered support &amp; lead capture.</div>
           </div>
         </div>
@@ -1112,10 +1123,6 @@
       <!-- HERO / PRODUCT -->
       <section id="product">
         <div class="hero-left">
-          <div class="hero-kicker">
-            <span class="hero-kicker-pill">New</span>
-            <span>AI layer for your website – no code needed</span>
-          </div>
           <h1 class="hero-title">
             Let an <span class="accent">AI assistant</span> answer visitors<br />
             while you focus on real work.
@@ -1154,11 +1161,7 @@
                   <div class="demo-sub">Ask anything about this program or website.</div>
                 </div>
               </div>
-              <div class="demo-status-pill">
-                <span class="status-dot"></span>
-                <span>Assistant is online</span>
-              </div>
-            </div>
+</div>
 
             <div class="demo-chat-shell">
               <div class="chat-row bot">
@@ -1200,7 +1203,7 @@
 
       <!-- WHY / USE CASES -->
       <section id="use-cases">
-        <div class="section-eyebrow">Why AutoSupport AI</div>
+        <div class="section-eyebrow">Why Fovelon</div>
         <h2 class="section-headline">A modern AI layer on top of your existing website.</h2>
         <p class="section-sub">
           Not another generic chat bubble. Your assistant understands your FAQ, speaks to visitors in their
@@ -1250,7 +1253,7 @@
           <article class="pricing-card">
             <div class="pricing-label">Starter</div>
             <div>
-              <span class="pricing-price">$0</span>
+              <span class="pricing-price">$19</span>
               <span class="pricing-month">/ month</span>
             </div>
             <p class="pricing-desc">
@@ -1267,10 +1270,11 @@
             </button>
           </article>
 
-          <article class="pricing-card">
+          <article class="pricing-card" pricing-card--popular>
             <div class="pricing-label">Pro</div>
+            <div class="pricing-badge">Most popular</div>
             <div>
-              <span class="pricing-price">$49</span>
+              <span class="pricing-price">$59</span>
               <span class="pricing-month">/ month</span>
             </div>
             <p class="pricing-desc">
@@ -1282,7 +1286,7 @@
               <li>Topic detection &amp; tagging</li>
               <li>Priority email support</li>
             </ul>
-            <button class="btn-cta btn-pricing" id="pricing-book-call">
+            <button class="btn-cta btn-pricing" id="pricing-get-pro">
               <span>Book a 15-min call</span>
             </button>
           </article>
@@ -1290,7 +1294,7 @@
           <article class="pricing-card">
             <div class="pricing-label">Scale</div>
             <div>
-              <span class="pricing-price">Custom</span>
+              <span class="pricing-price">$149</span>
               <span class="pricing-month">/ month</span>
             </div>
             <p class="pricing-desc">
@@ -1412,7 +1416,7 @@
         <div class="section-eyebrow">Inbox demo</div>
         <h2 class="section-headline">See every visitor, question and tag in one place.</h2>
         <p class="section-sub">
-          AutoSupport AI stores each conversation with IP-based country info, topic tags and contact
+          Fovelon stores each conversation with IP-based country info, topic tags and contact
           details – so you always know who reached out and why.
         </p>
 
@@ -1450,7 +1454,7 @@
       </section>
 
       <footer>
-        <span>© 2025 · AutoSupport AI · Built for teams who want more clients and less support work.</span>
+        <span>© 2025 · Fovelon · Built for teams who want more clients and less support work.</span>
         <span>Replies are powered by your FAQ + AI. You stay in control of the final close.</span>
       </footer>
     </div>
