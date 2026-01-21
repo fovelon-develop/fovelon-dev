@@ -170,7 +170,16 @@
       .modal-body{grid-template-columns:1fr}
       #conv{height: 52vh}
     }
-  </style>
+  
+/* iOS-like glass */
+.glassCard, .leadCard, .panel, .topbar{
+  background: rgba(18, 32, 58, .34);
+  border: 1px solid rgba(255,255,255,.14);
+  box-shadow: 0 18px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.12);
+  backdrop-filter: blur(22px) saturate(170%);
+}
+
+</style>
 </head>
 <body>
   <div class="topbar">

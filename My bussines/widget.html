@@ -56,9 +56,9 @@
     .btn.primary{border-color:rgba(74,163,255,.38); box-shadow:0 22px 60px rgba(74,163,255,.16)}
 
     .stage{padding:22px 0 32px}
-    .panel{
+     .panel{
       margin: 0 auto;
-      max-width: 760px;
+      max-width: min(760px, 94vw);
       border-radius: 22px;
       border:1px solid rgba(255,255,255,.10);
       background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
@@ -211,7 +211,7 @@
       max-height: min(520px, calc(100vh - 340px));
       overflow:auto;
       -webkit-overflow-scrolling: touch;
-    }
+     -webkit-overflow-scrolling: touch; }
 
     /* "orb" glow behind the panel */
     .stage{position:relative}
@@ -236,6 +236,14 @@
       0%,100%{transform:translateX(-50%) translateY(0) scale(1)}
       50%{transform:translateX(-50%) translateY(-10px) scale(1.01)}
     }
+
+@media (max-width: 520px){
+  .panel{ border-radius: 22px; }
+  .topbar .inner{ padding: 10px 12px; }
+  .panel{ height: min(74vh, 640px); }
+  .composer{ padding: 10px; }
+}
+
 </style>
 </head>
 <body>
