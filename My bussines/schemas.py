@@ -46,5 +46,15 @@ class LeadSummary(BaseModel):
     last_answer: Optional[str]
     source_page: Optional[str]
 
+
+
+class MessageOut(BaseModel):
+    role: str
+    content: str
+    created_at: datetime
+
+
+class LeadDetail(LeadSummary):
+    messages: List[MessageOut] = []
     class Config:
         from_attributes = True

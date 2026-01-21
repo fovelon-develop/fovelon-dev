@@ -11,7 +11,7 @@ from openai import OpenAI
 
 from database import Base, engine, get_db
 from models import Business, FAQ
-from schemas import ChatRequest, ChatResponse, LeadSummary
+from schemas import ChatRequest, ChatResponse, LeadSummary, LeadDetail
 import crud
 
 load_dotenv()
@@ -295,3 +295,18 @@ def widget_html_redirect():
 @app.get("/inbox.html", include_in_schema=False)
 def inbox_html_redirect():
     return RedirectResponse(url="/inbox", status_code=302)
+
+
+@app.get("/lead/{lead_id}", response_model=LeadDetail)
+def get_lead_detail(lead_id: int, db: Session = Depends(get_db)):
+    lead = crud.get_lead(db, lead_id)
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+
+    data = serialize_lead(lead, db)
+    messages = crud.list_messages_for_lead(db, lead_id)
+    data["messages"] = [
+        {"role": m.role, "content": m.content, "created_at": m.created_at}
+        for m in messages
+    ]
+    return data

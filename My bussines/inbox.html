@@ -331,7 +331,31 @@
       .logo-img{ width:44px; height:44px; padding:7px; }
       .brand-row{ gap:10px; }
     }
-</style>
+
+    /* ---------- Modal ---------- */
+    .modal-overlay{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.55); z-index:50; padding:20px; }
+    .modal{ width:min(920px, 100%); max-height:86vh; overflow:hidden; background:rgba(7,15,35,.92); border:1px solid rgba(255,255,255,.10); border-radius:18px; box-shadow: 0 20px 60px rgba(0,0,0,.45); backdrop-filter: blur(10px); }
+    .modal-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:16px 18px; border-bottom:1px solid rgba(255,255,255,.08); }
+    .modal-title{ font-size:14px; letter-spacing:.2px; color:var(--text-main); }
+    .modal-sub{ font-size:12px; color:var(--text-soft); margin-top:2px; }
+    .modal-close{ height:34px; padding:0 12px; border-radius:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); color:var(--text-main); cursor:pointer; }
+    .modal-body{ display:grid; grid-template-columns: 280px 1fr; gap:0; height:calc(86vh - 66px); }
+    .modal-side{ padding:16px 18px; border-right:1px solid rgba(255,255,255,.08); overflow:auto; }
+    .modal-main{ padding:16px 18px; overflow:auto; }
+    .kv{ margin-bottom:12px; }
+    .kv .k{ font-size:11px; color:var(--text-soft); }
+    .kv .v{ font-size:13px; color:var(--text-main); margin-top:2px; word-break:break-word; }
+    .msg{ padding:10px 12px; border:1px solid rgba(255,255,255,.08); border-radius:14px; margin-bottom:10px; background:rgba(255,255,255,.04); }
+    .msg.user{ background:rgba(72,192,255,.08); border-color:rgba(72,192,255,.18); }
+    .msg .r{ font-size:11px; color:var(--text-soft); margin-bottom:6px; }
+    .msg .c{ font-size:13px; color:var(--text-main); white-space:pre-wrap; }
+
+    @media (max-width: 820px){
+      .modal-body{ grid-template-columns:1fr; height:auto; max-height:86vh; }
+      .modal-side{ border-right:none; border-bottom:1px solid rgba(255,255,255,.08); }
+    }
+
+  </style>
 </head>
 <body>
 <div class="page">
@@ -360,7 +384,7 @@
       </div>
       <div class="top-actions">
         <button class="btn" onclick="window.location.href='/'">← Back to landing</button>
-        <button class="btn btn-primary" onclick="window.location.href='widget.html'">Open widget demo</button>
+        <button class="btn btn-primary" onclick="window.location.href='/widget'">Open widget demo</button>
       </div>
     </div>
 
@@ -514,6 +538,92 @@
       dot.style.setProperty("--dy", dy + "px");
     });
   });
+
+  const modalEl = document.getElementById('lead-modal');
+  const modalClose = document.getElementById('modal-close');
+  const modalSide = document.getElementById('modal-side');
+  const modalMain = document.getElementById('modal-main');
+  const modalTitle = document.getElementById('modal-title');
+  const modalSub = document.getElementById('modal-sub');
+
+  function openModal(){ modalEl.style.display='flex'; document.body.style.overflow='hidden'; }
+  function closeModal(){ modalEl.style.display='none'; document.body.style.overflow='auto'; }
+  modalClose?.addEventListener('click', closeModal);
+  modalEl?.addEventListener('click', (e)=>{ if(e.target===modalEl) closeModal(); });
+  window.addEventListener('keydown', (e)=>{ if(e.key==='Escape' && modalEl.style.display==='flex') closeModal(); });
+
+  function fmt(v){
+    if(v===undefined || v===null || v==='') return '–';
+    if(typeof v==='object'){
+      try{ return JSON.stringify(v); }catch{ return String(v); }
+    }
+    return String(v);
+  }
+
+  async function openLead(leadId){
+    modalSide.innerHTML = '<div class="kv"><div class="k">Loading…</div></div>';
+    modalMain.innerHTML = '';
+    modalTitle.textContent = `Lead #${leadId}`;
+    modalSub.textContent = '';
+    openModal();
+    try{
+      const res = await fetch(`/lead/${leadId}`);
+      const data = await res.json();
+      if(!res.ok) throw new Error(data?.detail || 'Failed to load');
+
+      const meta = data.meta || {};
+      modalTitle.textContent = (data.name && data.name.trim()) ? data.name : `Lead #${leadId}`;
+      modalSub.textContent = [data.email].filter(Boolean).join(' · ');
+
+      const sideItems = [
+        ['Lead ID', data.id],
+        ['Created', data.created_at],
+        ['Last seen', meta.last_seen_at],
+        ['Time on site (s)', meta.time_on_site_seconds],
+        ['Messages', meta.messages_count],
+        ['Visitor IP', meta.visitor_ip],
+        ['Country', meta.country],
+        ['Language', meta.language],
+        ['Page URL', meta.page_url],
+        ['Referrer', meta.referer],
+        ['User agent', meta.user_agent]
+      ];
+      modalSide.innerHTML = sideItems.map(([k,v])=>`<div class="kv"><div class="k">${k}</div><div class="v">${fmt(v)}</div></div>`).join('');
+
+      const msgs = Array.isArray(data.messages) ? data.messages : [];
+      if(msgs.length===0){
+        modalMain.innerHTML = '<div class="kv"><div class="k">Conversation</div><div class="v">No messages yet.</div></div>';
+      } else {
+        modalMain.innerHTML = msgs.map(m=>{
+          const role = (m.role||'').toLowerCase();
+          const cls = role==='user' ? 'msg user' : 'msg';
+          const r = role ? role : 'message';
+          const t = m.created_at ? ` · ${m.created_at}` : '';
+          return `<div class="${cls}"><div class="r">${r}${t}</div><div class="c">${fmt(m.content)}</div></div>`;
+        }).join('');
+      }
+    } catch(err){
+      modalSide.innerHTML = `<div class="kv"><div class="k">Error</div><div class="v">${fmt(err.message)}</div></div>`;
+    }
+  }
+
 </script>
+
+  <div class="modal-overlay" id="lead-modal" role="dialog" aria-modal="true" aria-label="Lead details">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title" id="modal-title">Lead</div>
+          <div class="modal-sub" id="modal-sub"></div>
+        </div>
+        <button class="modal-close" id="modal-close">Close</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-side" id="modal-side"></div>
+        <div class="modal-main" id="modal-main"></div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

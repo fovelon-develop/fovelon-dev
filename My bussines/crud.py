@@ -146,3 +146,12 @@ def append_messages_to_lead(
     db.commit()
     db.refresh(lead)
     return lead
+
+
+def list_messages_for_lead(db: Session, lead_id: int):
+    return (
+        db.query(models.Message)
+        .filter(models.Message.lead_id == lead_id)
+        .order_by(models.Message.created_at.asc())
+        .all()
+    )
