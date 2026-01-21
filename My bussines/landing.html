@@ -1,0 +1,1682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AutoSupport AI – AI support & lead capture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #020819;
+      --bg-soft: #050f27;
+      --card: #050f27;
+      --card-soft: #06152f;
+      --accent: #48c0ff;
+      --accent-2: #34d884;
+      --text-main: #f7fbff;
+      --text-soft: #9aa7c6;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      height: 100%;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, #0a1540 0, #020819 45%),
+        radial-gradient(circle at 100% 100%, #071a4a 0, #020819 55%);
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ---------- Global layout ---------- */
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .page::before,
+    .page::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      border-radius: 999px;
+      filter: blur(40px);
+      opacity: 0.6;
+    }
+
+    .page::before {
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, #0e2f6e 0, transparent 60%);
+      top: -120px;
+      left: -80px;
+    }
+
+    .page::after {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle, #05275b 0, transparent 60%);
+      bottom: -180px;
+      right: -100px;
+    }
+
+    /* ---------- Micro-blobs & particles (liquid amoeba) ---------- */
+
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .bg-blob {
+      position: absolute;
+      width: 260px;
+      height: 260px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 20%, rgba(96, 165, 250, 0.9), transparent 70%);
+      filter: blur(40px);
+      opacity: 0.28;
+      transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0);
+      transition: opacity 0.3s ease;
+      mix-blend-mode: screen;
+    }
+
+    .bg-blob:nth-child(1) {
+      top: 18%;
+      left: 6%;
+      background: radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.9), transparent 70%);
+    }
+
+    .bg-blob:nth-child(2) {
+      top: 60%;
+      right: 10%;
+      width: 320px;
+      height: 320px;
+      background: radial-gradient(circle at 30% 20%, rgba(45, 212, 191, 0.85), transparent 70%);
+    }
+
+    .bg-blob:nth-child(3) {
+      top: 40%;
+      left: 55%;
+      width: 280px;
+      height: 280px;
+      background: radial-gradient(circle at 50% 40%, rgba(129, 140, 248, 0.9), transparent 70%);
+    }
+
+    .bg-dot {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(191, 219, 254, 0.85);
+      box-shadow:
+        0 0 14px rgba(96, 165, 250, 0.9),
+        0 0 30px rgba(30, 64, 175, 0.7);
+      opacity: 0.6;
+      transform: translate3d(var(--dx, 0px), var(--dy, 0px), 0);
+    }
+
+    .bg-dot:nth-child(4) { top: 22%; left: 30%; }
+    .bg-dot:nth-child(5) { top: 70%; left: 18%; }
+    .bg-dot:nth-child(6) { top: 35%; right: 22%; }
+    .bg-dot:nth-child(7) { top: 80%; right: 30%; }
+
+    main {
+      position: relative;
+      z-index: 3;
+      flex: 1;
+    }
+
+    .shell {
+      max-width: 1160px;
+      margin: 0 auto;
+      padding: 24px 18px 80px;
+    }
+
+    @media (min-width: 1200px) {
+      .shell {
+        padding: 32px 0 96px;
+      }
+    }
+
+    /* ---------- Floating soft messages in BACKGROUND ONLY ---------- */
+
+    .floating-copy {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      font-size: 13px;
+      color: rgba(177, 198, 239, 0.3);
+    }
+
+    .floating-copy span {
+      position: absolute;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: rgba(5, 16, 42, 0.96);
+      border: 1px solid rgba(132, 168, 255, 0.25);
+      box-shadow: 0 0 30px rgba(20, 80, 200, 0.35);
+      opacity: 0;
+      transform: translate3d(0, 18px, 0);
+      animation: floatMsg 22s linear infinite;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .floating-copy span:nth-child(1) {
+      left: 7%;
+      top: 74%;
+      animation-delay: 2s;
+    }
+    .floating-copy span:nth-child(2) {
+      right: 8%;
+      top: 18%;
+      animation-delay: 7s;
+    }
+    .floating-copy span:nth-child(3) {
+      right: 16%;
+      bottom: 10%;
+      animation-delay: 12s;
+    }
+    .floating-copy span:nth-child(4) {
+      left: 14%;
+      bottom: 18%;
+      animation-delay: 17s;
+    }
+
+    @keyframes floatMsg {
+      0% {
+        opacity: 0;
+        transform: translate3d(0, 26px, 0);
+      }
+      10% {
+        opacity: 0.45;
+      }
+      50% {
+        opacity: 0.35;
+        transform: translate3d(0, 0, 0);
+      }
+      90% {
+        opacity: 0;
+        transform: translate3d(0, -26px, 0);
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* ---------- Top nav ---------- */
+
+    header.nav {
+      position: relative;
+      z-index: 4;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding-bottom: 18px;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-orb {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 20% 15%, #ffffff 0, #cde6ff 24%, #55c4ff 52%, #21bd7a 100%);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.8);
+    }
+
+    .logo-orb::after {
+      content: "";
+      position: absolute;
+      inset: 7px;
+      border-radius: inherit;
+      background: radial-gradient(circle at 30% 20%, #ffffff 0, #e5f6ff 18%, #2489ff 55%, #14945d 100%);
+      opacity: 0.85;
+    }
+
+    .logo-orb::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 100%;
+      width: 90px;
+      height: 34px;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(25, 105, 255, 0.75), transparent 65%);
+      filter: blur(12px);
+      opacity: 0.9;
+      z-index: -1;
+    }
+
+    .nav-title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .nav-title-main {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-sub {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 14px;
+      color: var(--text-soft);
+    }
+
+    .nav-link {
+      position: relative;
+      padding-bottom: 4px;
+      cursor: pointer;
+      transition: color 0.25s ease;
+    }
+
+    .nav-link::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 0.25s ease;
+    }
+
+    .nav-link:hover {
+      color: #dfe8ff;
+    }
+
+    .nav-link:hover::after {
+      width: 100%;
+    }
+
+    .nav-cta {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-cta {
+      position: relative;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 8px 18px 8px 16px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #3d8bff, #34d884);
+      box-shadow: 0 12px 24px rgba(35, 151, 255, 0.4);
+      color: #fdfefe;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: transform 0.16s ease, box-shadow 0.16s ease;
+      white-space: nowrap;
+    }
+
+    .btn-cta:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(35, 151, 255, 0.55);
+    }
+
+    .btn-cta:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 20px rgba(35, 151, 255, 0.35);
+    }
+
+    /* ---------- HERO (Product) ---------- */
+
+    #product {
+      padding: 32px 0 40px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.05fr);
+      gap: 44px;
+      align-items: center;
+    }
+
+    @media (max-width: 980px) {
+      #product {
+        grid-template-columns: minmax(0, 1fr);
+        padding-top: 24px;
+      }
+    }
+
+    .hero-left {
+      position: relative;
+      z-index: 4;
+    }
+
+    .hero-kicker {
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at 0 50%, rgba(56, 142, 255, 0.55), transparent 60%),
+        rgba(6, 18, 40, 0.96);
+      color: var(--text-soft);
+      margin-bottom: 16px;
+    }
+
+    .hero-kicker-pill {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(3, 9, 23, 0.9);
+      border: 1px solid rgba(148, 163, 255, 0.6);
+    }
+
+    .hero-title {
+      font-size: clamp(28px, 3.6vw + 12px, 40px);
+      line-height: 1.16;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      margin-bottom: 16px;
+    }
+
+    .hero-title span.accent {
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-subtitle {
+      font-size: 15px;
+      color: var(--text-soft);
+      max-width: 460px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+
+    .hero-ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .btn-secondary {
+      border-radius: 999px;
+      padding: 8px 16px;
+      border: 1px dashed rgba(148, 163, 255, 0.7);
+      background: rgba(4, 16, 39, 0.9);
+      font-size: 14px;
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease,
+        transform 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-secondary:hover {
+      border-color: rgba(112, 168, 255, 0.8);
+      background: rgba(7, 25, 61, 0.96);
+      color: #e3ecff;
+      transform: translateY(-1px);
+    }
+
+    .hero-metadata {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 20px;
+      font-size: 13px;
+      color: var(--text-soft);
+      margin-top: 10px;
+    }
+
+    .hero-metadata span::before {
+      content: "• ";
+      margin-right: 4px;
+    }
+
+    .hero-right {
+      display: flex;
+      justify-content: flex-end;
+      position: relative;
+      z-index: 4;
+    }
+
+    /* ---------- Chat demo card ---------- */
+
+    .demo-card {
+      width: 100%;
+      max-width: 440px;
+      border-radius: 28px;
+      background: radial-gradient(circle at 10% 0, #122955 0, #040c1f 52%, #020817 100%);
+      border: 1px solid rgba(109, 163, 255, 0.45);
+      box-shadow: 0 24px 60px rgba(2, 7, 24, 0.9);
+      padding: 14px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .demo-card::before {
+      content: "";
+      position: absolute;
+      inset: -60%;
+      background: radial-gradient(circle at 10% 0, rgba(96, 165, 250, 0.13), transparent 55%),
+        radial-gradient(circle at 90% 100%, rgba(52, 211, 153, 0.16), transparent 50%);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .demo-header {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .demo-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .demo-avatar {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 20% 15%, #ffffff 0, #e5f2ff 18%, #3b82f6 55%, #22c55e 100%);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .demo-avatar-inner {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      border: 2px solid rgba(3, 7, 18, 0.8);
+      background: radial-gradient(circle at 30% 20%, #ffffff 0, #e5f6ff 18%, #2563eb 55%, #22c55e 100%);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+      position: relative;
+    }
+
+    .demo-avatar-inner::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: inherit;
+      border: 2px solid rgba(15, 23, 42, 0.7);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.4);
+      opacity: 0.9;
+    }
+
+    .demo-header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .demo-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .demo-sub {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .demo-status-pill {
+      border-radius: 999px;
+      border: 1px dashed rgba(148, 163, 255, 0.7);
+      padding: 4px 10px;
+      font-size: 11px;
+      color: var(--text-soft);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(6, 12, 30, 0.98);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #4ade80;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.2);
+    }
+
+    .demo-chat-shell {
+      position: relative;
+      z-index: 1;
+      margin-top: 6px;
+      border-radius: 18px;
+      border: 1px solid rgba(103, 148, 255, 0.4);
+      background: radial-gradient(circle at 0 0, rgba(30, 64, 175, 0.45), transparent 52%),
+        rgba(3, 7, 18, 0.96);
+      padding: 10px 10px 12px;
+      min-height: 220px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chat-row {
+      display: flex;
+      margin-bottom: 4px;
+    }
+
+    .chat-row.bot {
+      justify-content: flex-start;
+    }
+
+    .chat-row.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 90%;
+      padding: 9px 11px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.45;
+      position: relative;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .bubble.bot-bubble {
+      background: rgba(17, 24, 39, 0.96);
+      border: 1px solid rgba(148, 163, 255, 0.55);
+      color: #e5edff;
+      box-shadow: 0 10px 30px rgba(6, 12, 33, 0.9);
+    }
+
+    .bubble.user-bubble {
+      background: linear-gradient(135deg, #3b82f6, #22c55e);
+      color: #fdfdfd;
+      box-shadow: 0 10px 26px rgba(35, 141, 255, 0.65);
+    }
+
+    .demo-typing {
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .typing-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .typing-dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(148, 163, 255, 0.8);
+      animation: typingBlink 1.2s infinite ease-in-out;
+    }
+
+    .typing-dots span:nth-child(2) {
+      animation-delay: 0.18s;
+    }
+
+    .typing-dots span:nth-child(3) {
+      animation-delay: 0.32s;
+    }
+
+    @keyframes typingBlink {
+      0%, 80%, 100% {
+        opacity: 0.2;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-2px);
+      }
+    }
+
+    .demo-footer {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    .demo-footer strong {
+      color: #dbeafe;
+      font-weight: 500;
+    }
+
+    .demo-open-btn {
+      position: relative;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      border-radius: 999px;
+      padding: 9px 18px 9px 16px;
+      background: linear-gradient(90deg, #3b82f6, #22c55e);
+      color: #f9fbff;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      box-shadow: 0 12px 28px rgba(37, 99, 235, 0.6);
+      transition:
+        transform 0.16s ease,
+        box-shadow 0.16s ease,
+        filter 0.16s ease;
+      white-space: nowrap;
+    }
+
+    .demo-open-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 36px rgba(37, 99, 235, 0.8);
+      filter: brightness(1.05);
+    }
+
+    .demo-open-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 22px rgba(30, 64, 175, 0.9);
+    }
+
+    /* ---------- sections below hero ---------- */
+
+    section {
+      margin-top: 48px;
+      position: relative;
+      z-index: 3;
+    }
+
+    .section-eyebrow {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+    }
+
+    .section-headline {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .section-sub {
+      font-size: 14px;
+      color: var(--text-soft);
+      max-width: 620px;
+      margin-bottom: 20px;
+    }
+
+    /* why / use cases cards */
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    @media (max-width: 960px) {
+      .why-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 700px) {
+      .why-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .why-card {
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 0 0, rgba(37, 99, 235, 0.35), transparent 60%),
+        #050f27;
+      border: 1px solid rgba(129, 140, 248, 0.5);
+      padding: 16px 16px 18px;
+      box-shadow: 0 18px 40px rgba(3, 7, 23, 0.9);
+    }
+
+    .why-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .why-subtitle {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      color: var(--text-soft);
+      margin-bottom: 6px;
+    }
+
+    .why-body {
+      font-size: 13px;
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+
+    /* pricing cards */
+
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 1000px) {
+      .pricing-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+    @media (max-width: 720px) {
+      .pricing-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .pricing-card {
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 0 0, rgba(37, 99, 235, 0.3), transparent 60%),
+        #050f27;
+      border: 1px solid rgba(129, 140, 248, 0.5);
+      padding: 18px 18px 16px;
+      box-shadow: 0 20px 46px rgba(3, 7, 23, 0.92);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .pricing-label {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+    }
+
+    .pricing-price {
+      font-size: 26px;
+      font-weight: 700;
+      margin: 4px 0 2px;
+    }
+
+    .pricing-month {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .pricing-desc {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .pricing-list {
+      list-style: none;
+      margin: 4px 0 10px;
+      padding: 0;
+      font-size: 13px;
+    }
+
+    .pricing-list li {
+      margin-bottom: 4px;
+      position: relative;
+      padding-left: 14px;
+    }
+
+    .pricing-list li::before {
+      content: "•";
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: #6ee7b7;
+    }
+
+    .btn-pricing {
+      margin-top: auto;
+      align-self: flex-start;
+    }
+
+    /* Common questions strip (ticker) */
+
+    .common-strip {
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 0 0, rgba(37, 99, 235, 0.26), transparent 60%),
+        #050f27; /* مات؛ حباب‌ها دیده نشن */
+      border: 1px solid rgba(129, 140, 248, 0.6);
+      padding: 18px 18px 20px;
+      box-shadow: 0 22px 50px rgba(3, 7, 23, 0.95);
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1.6fr);
+      gap: 22px;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 980px) {
+      .common-strip {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .common-label {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-soft);
+      margin-bottom: 4px;
+    }
+
+    .common-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .common-subtext {
+      font-size: 13px;
+      color: var(--text-soft);
+      max-width: 360px;
+      line-height: 1.5;
+    }
+
+    .qa-ticker-window {
+      position: relative;
+      overflow: hidden;
+      max-height: 170px; /* حدوداً دو سؤال کامل */
+    }
+
+    .qa-ticker-inner {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transform: translateY(0);
+      transition: transform 0.6s ease-out;
+    }
+
+    .qa-block {
+      margin-bottom: 0;
+    }
+
+    .qa-q {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .qa-a {
+      font-size: 13px;
+      color: var(--text-soft);
+      line-height: 1.5;
+    }
+
+    /* bottom CTA */
+
+    .bottom-cta {
+      margin-top: 32px;
+      border-radius: 24px;
+      border: 1px solid rgba(129, 140, 248, 0.55);
+      background:
+        radial-gradient(circle at 0 0, rgba(37, 99, 235, 0.25), transparent 60%),
+        #050f27;
+      padding: 16px 18px 14px;
+      box-shadow: 0 20px 46px rgba(3, 7, 23, 0.92);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .bottom-cta-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    footer {
+      margin-top: 40px;
+      padding-top: 18px;
+      font-size: 12px;
+      color: var(--text-soft);
+      border-top: 1px solid rgba(15, 23, 42, 0.86);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* Inbox demo card */
+
+    #inbox-demo-card {
+      margin-top: 18px;
+      border-radius: 24px;
+      border: 1px solid rgba(148, 163, 255, 0.55);
+      background:
+        radial-gradient(circle at 0 0, rgba(37, 99, 235, 0.3), transparent 60%),
+        #050f27;
+      padding: 16px 18px;
+      box-shadow: 0 18px 40px rgba(3, 7, 23, 0.9);
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    @media (max-width: 640px) {
+      header.nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .bottom-cta {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .demo-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .demo-open-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <!-- micro blobs & particles -->
+  <div class="bg-layer">
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-blob"></div>
+    <div class="bg-dot"></div>
+    <div class="bg-dot"></div>
+    <div class="bg-dot"></div>
+    <div class="bg-dot"></div>
+  </div>
+
+  <!-- floating soft messages in background -->
+  <div class="floating-copy">
+    <span>“Visitor from Berlin installed the widget in 4 minutes.”</span>
+    <span>“Lead from São Paulo asked about pricing – auto-tagged.”</span>
+    <span>“Coach in Toronto closed a client after 2 chat replies.”</span>
+    <span>“Team in Dubai sees all conversations in one inbox.”</span>
+  </div>
+
+  <main>
+    <div class="shell">
+      <!-- NAV -->
+      <header class="nav">
+        <div class="nav-left">
+          <div class="logo-orb"></div>
+          <div class="nav-title">
+            <div class="nav-title-main">AutoSupport AI</div>
+            <div class="nav-sub">AI-powered support &amp; lead capture.</div>
+          </div>
+        </div>
+        <div class="nav-links">
+          <div class="nav-link" data-scroll="#product">Product</div>
+          <div class="nav-link" data-scroll="#use-cases">Use cases</div>
+          <div class="nav-link" data-scroll="#pricing">Pricing</div>
+          <div class="nav-link" data-scroll="#inbox-demo">Inbox demo</div>
+          <div class="nav-link" id="nav-open-widget">Widget demo</div>
+        </div>
+        <div class="nav-cta">
+          <button class="btn-cta" data-scroll="#pricing">
+            <span>Get started</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- HERO / PRODUCT -->
+      <section id="product">
+        <div class="hero-left">
+          <div class="hero-kicker">
+            <span class="hero-kicker-pill">New</span>
+            <span>AI layer for your website – no code needed</span>
+          </div>
+          <h1 class="hero-title">
+            Let an <span class="accent">AI assistant</span> answer visitors<br />
+            while you focus on real work.
+          </h1>
+          <p class="hero-subtitle">
+            Drop one line of script on your site. Your assistant answers common questions,
+            detects intent, and turns conversations into qualified leads in your inbox.
+          </p>
+
+          <div class="hero-ctas">
+            <button class="btn-cta" data-scroll="#pricing">
+              <span>See pricing</span>
+            </button>
+            <button class="btn-secondary" id="hero-open-widget">
+              <span>Watch live widget demo</span>
+            </button>
+          </div>
+
+          <div class="hero-metadata">
+            <span>24/7 instant replies</span>
+            <span>Multi-language out of the box</span>
+            <span>All conversations land in one inbox</span>
+          </div>
+        </div>
+
+        <!-- HERO RIGHT: DEMO (widget demo anchor) -->
+        <div class="hero-right" id="widget-demo">
+          <div class="demo-card">
+            <div class="demo-header">
+              <div class="demo-header-left">
+                <div class="demo-avatar">
+                  <div class="demo-avatar-inner"></div>
+                </div>
+                <div class="demo-header-text">
+                  <div class="demo-title">Support Assistant · Online Coaching</div>
+                  <div class="demo-sub">Ask anything about this program or website.</div>
+                </div>
+              </div>
+              <div class="demo-status-pill">
+                <span class="status-dot"></span>
+                <span>Assistant is online</span>
+              </div>
+            </div>
+
+            <div class="demo-chat-shell">
+              <div class="chat-row bot">
+                <div class="bubble bot-bubble" id="demo-msg-1">
+                  Hi! I'm your AI support assistant. Ask me anything about this program.
+                </div>
+              </div>
+              <div class="chat-row user">
+                <div class="bubble user-bubble" id="demo-msg-2">
+                  Can I install this widget on my WordPress site?
+                </div>
+              </div>
+              <div class="chat-row bot">
+                <div class="bubble bot-bubble" id="demo-msg-3">
+                  Yes! Paste one script tag and you’ll be live in under five minutes.
+                </div>
+              </div>
+
+              <div class="demo-typing" id="demo-typing">
+                <span>Assistant is typing</span>
+                <span class="typing-dots">
+                  <span></span><span></span><span></span>
+                </span>
+              </div>
+            </div>
+
+            <div class="demo-footer">
+              <span>
+                Every conversation is tagged by topic and saved as a <strong>lead</strong> in your inbox.
+              </span>
+              <button class="demo-open-btn" id="open-full-widget">
+                <span>Open full widget</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- WHY / USE CASES -->
+      <section id="use-cases">
+        <div class="section-eyebrow">Why AutoSupport AI</div>
+        <h2 class="section-headline">A modern AI layer on top of your existing website.</h2>
+        <p class="section-sub">
+          Not another generic chat bubble. Your assistant understands your FAQ, speaks to visitors in their
+          language, and quietly fills your pipeline with qualified leads.
+        </p>
+
+        <div class="why-grid">
+          <article class="why-card">
+            <div class="why-subtitle">AI answers</div>
+            <div class="why-title">Always-on assistant trained on your offer</div>
+            <p class="why-body">
+              Import your FAQ and key pages. The assistant replies based on your content, not random guesses.
+              When it’s unsure, it collects the question as a lead instead of inventing an answer.
+            </p>
+          </article>
+
+          <article class="why-card">
+            <div class="why-subtitle">Lead inbox</div>
+            <div class="why-title">Smart lead inbox with topic detection</div>
+            <p class="why-body">
+              Every conversation is tagged by AI – pricing, schedule, technical, or content – so you always
+              know what visitors care about most before you reply.
+            </p>
+          </article>
+
+          <article class="why-card">
+            <div class="why-subtitle">Multilingual</div>
+            <div class="why-title">Multilingual from day one</div>
+            <p class="why-body">
+              Visitors can start in English, switch to Spanish, ask again in German, and finish in Arabic –
+              the assistant keeps up and all messages land in one thread for you.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <!-- PRICING -->
+      <section id="pricing">
+        <div class="section-eyebrow">Pricing</div>
+        <h2 class="section-headline">Start simple, scale when the assistant closes more deals.</h2>
+        <p class="section-sub">
+          Transparent plans for solo creators, agencies and growing teams. Upgrade only when you feel the
+          assistant is paying for itself.
+        </p>
+
+        <div class="pricing-grid">
+          <article class="pricing-card">
+            <div class="pricing-label">Starter</div>
+            <div>
+              <span class="pricing-price">$0</span>
+              <span class="pricing-month">/ month</span>
+            </div>
+            <p class="pricing-desc">
+              Perfect to test the assistant on a single site.
+            </p>
+            <ul class="pricing-list">
+              <li>1 website / assistant</li>
+              <li>Up to 200 AI replies / month</li>
+              <li>Lead inbox with CSV export</li>
+              <li>Basic FAQ import</li>
+            </ul>
+            <button class="btn-cta btn-pricing" id="pricing-start-free">
+              <span>Start for free</span>
+            </button>
+          </article>
+
+          <article class="pricing-card">
+            <div class="pricing-label">Pro</div>
+            <div>
+              <span class="pricing-price">$49</span>
+              <span class="pricing-month">/ month</span>
+            </div>
+            <p class="pricing-desc">
+              For busy teams that want AI to handle most support.
+            </p>
+            <ul class="pricing-list">
+              <li>Up to 3 assistants / domains</li>
+              <li>3,000 AI replies / month</li>
+              <li>Topic detection &amp; tagging</li>
+              <li>Priority email support</li>
+            </ul>
+            <button class="btn-cta btn-pricing" id="pricing-book-call">
+              <span>Book a 15-min call</span>
+            </button>
+          </article>
+
+          <article class="pricing-card">
+            <div class="pricing-label">Scale</div>
+            <div>
+              <span class="pricing-price">Custom</span>
+              <span class="pricing-month">/ month</span>
+            </div>
+            <p class="pricing-desc">
+              For agencies, marketplaces and high-volume products.
+            </p>
+            <ul class="pricing-list">
+              <li>Unlimited assistants &amp; domains</li>
+              <li>Volume-based pricing</li>
+              <li>Dedicated onboarding &amp; training</li>
+              <li>Priority routing &amp; integrations</li>
+            </ul>
+            <button class="btn-cta btn-pricing" id="pricing-talk-sales">
+              <span>Talk to sales</span>
+            </button>
+          </article>
+        </div>
+      </section>
+
+      <!-- COMMON QUESTIONS + strip (ticker) -->
+      <section id="common">
+        <div class="common-strip">
+          <div>
+            <div class="common-label">Common questions</div>
+            <div class="common-title">Your assistant keeps answering, you keep coaching.</div>
+            <p class="common-subtext">
+              The most frequent questions visitors ask before they book a call or buy – answered automatically, logged as leads, and ready for your follow-up.
+            </p>
+          </div>
+
+          <div class="qa-ticker-window">
+            <div class="qa-ticker-inner" id="qa-ticker-inner">
+              <!-- این‌ها با JS هم قابل بروزرسانی هستن، اما الان استاتیک + انیمیشن اسکرول می‌شن -->
+              <div class="qa-block">
+                <div class="qa-q">Will the AI invent answers?</div>
+                <div class="qa-a">
+                  No. When confidence is low, the assistant stops, asks for contact details and sends the
+                  question to your inbox instead of hallucinating.
+                </div>
+              </div>
+
+              <div class="qa-block">
+                <div class="qa-q">How long does setup take?</div>
+                <div class="qa-a">
+                  Most users get a trained assistant live on their site in under 15 minutes. You paste the
+                  script, import your FAQ, and watch the first conversations roll in.
+                </div>
+              </div>
+
+              <div class="qa-block">
+                <div class="qa-q">Can I review past conversations?</div>
+                <div class="qa-a">
+                  Yes. Every chat is stored in your inbox with tags, timestamps and source page – so you can
+                  review what people ask before you tweak your offer.
+                </div>
+              </div>
+
+              <div class="qa-block">
+                <div class="qa-q">Does it support multiple websites?</div>
+                <div class="qa-a">
+                  You can run separate assistants for each domain or funnel, all feeding into the same inbox
+                  with clear tags for the source.
+                </div>
+              </div>
+
+              <div class="qa-block">
+                <div class="qa-q">Can I use it as a simple contact form?</div>
+                <div class="qa-a">
+                  Absolutely. You can keep only lead capture on and route all messages to email while you
+                  experiment with AI replies in the background.
+                </div>
+              </div>
+
+              <div class="qa-block">
+                <div class="qa-q">What if I update my pricing or FAQ?</div>
+                <div class="qa-a">
+                  Update your FAQ or key pages and the assistant will pick up the new information on the next
+                  sync – no redeploy needed.
+                </div>
+              </div>
+
+              <div class="qa-block">
+                <div class="qa-q">Can I export my leads?</div>
+                <div class="qa-a">
+                  Yes. Export all conversations, tags and contact details to CSV so you can upload them into
+                  your CRM or newsletter tool.
+                </div>
+              </div>
+
+              <div class="qa-block">
+                <div class="qa-q">Does it work with WordPress / Webflow / custom code?</div>
+                <div class="qa-a">
+                  If your site can load one JavaScript snippet, the widget works. No special plugins or
+                  frameworks are required.
+                </div>
+              </div>
+
+              <div class="qa-block">
+                <div class="qa-q">Can I pause the assistant without removing the widget?</div>
+                <div class="qa-a">
+                  Yes. You can switch to “collect only” mode where visitors still see the widget, but all
+                  replies are manual from your side.
+                </div>
+              </div>
+
+              <div class="qa-block">
+                <div class="qa-q">Will it slow down my website?</div>
+                <div class="qa-a">
+                  The script is lightweight and loads asynchronously, so it doesn’t block your main content
+                  or hurt your Core Web Vitals.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- INBOX DEMO PREVIEW -->
+      <section id="inbox-demo">
+        <div class="section-eyebrow">Inbox demo</div>
+        <h2 class="section-headline">See every visitor, question and tag in one place.</h2>
+        <p class="section-sub">
+          AutoSupport AI stores each conversation with IP-based country info, topic tags and contact
+          details – so you always know who reached out and why.
+        </p>
+
+        <div id="inbox-demo-card">
+          Imagine a clean table of conversations here: visitor country, last question, topic tags,
+          conversion status and export to CSV. Click below to see the live inbox view wired to your own data.
+          <br /><br />
+          <button class="btn-secondary" id="open-real-inbox">
+            Open lead inbox view
+          </button>
+        </div>
+      </section>
+
+      <!-- BOTTOM CTA -->
+      <section id="bottom-cta">
+        <div class="bottom-cta">
+          <div>
+            <div class="section-headline" style="margin-bottom:4px;">
+              Ready to see how it works on your own website?
+            </div>
+            <div>
+              Paste one script tag, train on your FAQ, and watch the first conversations appear in your
+              inbox in minutes.
+            </div>
+          </div>
+          <div class="bottom-cta-actions">
+            <button class="btn-cta" id="bottom-open-widget">
+              <span>Try live widget</span>
+            </button>
+            <button class="btn-secondary" id="bottom-open-inbox">
+              Preview lead inbox
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <span>© 2025 · AutoSupport AI · Built for teams who want more clients and less support work.</span>
+        <span>Replies are powered by your FAQ + AI. You stay in control of the final close.</span>
+      </footer>
+    </div>
+  </main>
+</div>
+
+<script>
+  // smooth scroll for internal sections
+  document.querySelectorAll("[data-scroll]").forEach((el) => {
+    el.addEventListener("click", () => {
+      const id = el.getAttribute("data-scroll");
+      const target = document.querySelector(id);
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    });
+  });
+
+  // open widget / inbox pages in new tab
+  function openWidget() {
+    window.open("widget.html", "_blank");
+  }
+  function openInbox() {
+    window.open("inbox.html", "_blank");
+  }
+
+  document.getElementById("open-full-widget")?.addEventListener("click", openWidget);
+  document.getElementById("hero-open-widget")?.addEventListener("click", openWidget);
+  document.getElementById("nav-open-widget")?.addEventListener("click", openWidget);
+  document.getElementById("bottom-open-widget")?.addEventListener("click", openWidget);
+
+  document.getElementById("open-real-inbox")?.addEventListener("click", openInbox);
+  document.getElementById("bottom-open-inbox")?.addEventListener("click", openInbox);
+
+  // pricing buttons
+  document.getElementById("pricing-start-free")?.addEventListener("click", openWidget);
+  document.getElementById("pricing-book-call")?.addEventListener("click", openInbox);
+  document.getElementById("pricing-talk-sales")?.addEventListener("click", openInbox);
+
+  // rotating demo conversations – 20 زبان مختلف، همه در موضوع ویجت و بیزنس
+  const demoMsgs = [
+    {
+      m1: "Hi! I'm your AI support assistant. Ask me anything about this offer.",
+      m2: "Can the assistant answer in Spanish for my clients?",
+      m3: "Yes. It can reply in Spanish, English and many other languages. Just write in the language you prefer."
+    },
+    {
+      m1: "سلام! من دستیار هوشمند این سایت هستم، هر سوالی درباره خدماتت داری بپرس.",
+      m2: "میتونم این ویجت رو روی وردپرس و لندینگ‌پیج جدا نصب کنم؟",
+      m3: "بله. فقط یک اسکریپت کوتاه به هر سایتی اضافه می‌کنی و ویجت روی همان دامنه فعال می‌شود – بدون نیاز به کدنویسی."
+    },
+    {
+      m1: "Привет! Я помогаю отвечать на вопросы и собирать лиды вместо тебя.",
+      m2: "Смогу ли я видеть, из какой страны пишет посетитель?",
+      m3: "Да. Каждый диалог сохраняется с IP-страной, темами вопросов и контактами в твоём инбоксе."
+    },
+    {
+      m1: "Olá! Sou o assistente de suporte deste site.",
+      m2: "Consigo ver quais páginas o visitante visitou antes do chat?",
+      m3: "Sim. A conversa é registrada com a página de origem, tags de tópico e dados de contato no seu inbox."
+    },
+    {
+      m1: "¡Hola! Soy tu asistente de soporte automatizado.",
+      m2: "¿Puede el chat captar correos y nombres automáticamente?",
+      m3: "Claro. Cuando detecta interés, pide nombre, email y guarda todo como lead listo para tu seguimiento."
+    },
+    {
+      m1: "Hallo! Ich bin der KI-Assistent auf dieser Website.",
+      m2: "Kann ich den Assistenten nur auf meiner Preisseite anzeigen?",
+      m3: "Ja. Puedes limitar el widget a páginas específicas o mostrarlo en todo el sitio con una sola configuración."
+    },
+    {
+      m1: "Salut ! Je suis l’assistant IA de ce site.",
+      m2: "Peut-il répondre aux questions récurrentes à ma place ?",
+      m3: "Oui. Tu importes ta FAQ et l’assistant répond aux questions répétitives pendant que toi tu gères les clients sérieux."
+    },
+    {
+      m1: "مرحباً! أنا المساعد الذكي لموقعك.",
+      m2: "هل يمكنه التحدث بالعربية والإنجليزية مع نفس العميل؟",
+      m3: "نعم. يمكنه التبديل بسلاسة بين اللغات بينما تبقى كل الرسائل في خيط واحد داخل صندوق الوارد لديك."
+    },
+    {
+      m1: "Merhaba! Ben sitendeki yapay zeka asistanıyım.",
+      m2: "Kurulum için geliştiriciye ihtiyacım var mı?",
+      m3: "Hayır. Tek yapman gereken küçük bir script eklemek. Kalan her şeyi panelden ayarlayabilirsin."
+    },
+    {
+      m1: "Ciao! Sono l’assistente AI del tuo sito.",
+      m2: "Posso usarlo per qualificar leads antes de falar pessoalmente?",
+      m3: "Certo. O assistente faz as perguntas iniciais e te entrega leads já qualificados no inbox."
+    },
+    {
+      m1: "Hoi! Ik ben de AI-assistent op deze website.",
+      m2: "Werkt dit ook als ik later van prijzen verander?",
+      m3: "Ja. Je past je FAQ of pricing-pagina aan en de assistent volgt automatisch de nieuwe informatie."
+    },
+    {
+      m1: "नमस्ते! मैं आपकी वेबसाइट का AI सहायक हूँ।",
+      m2: "क्या यह अलग-अलग लैंडिंग पेजों के लिए अलग बॉट बना सकता है?",
+      m3: "हाँ, आप कई assistants बना सकते हैं – हर funnel के लिए – और फिर भी सब कुछ एक ही inbox में देख सकते हैं."
+    },
+    {
+      m1: "你好！我是这个网站的智能客服助手。",
+      m2: "它能记录每个访客的邮箱和问题吗？",
+      m3: "可以。每一次对话都会保存联系方式、问题内容以及访问页面，方便后续跟进。"
+    },
+    {
+      m1: "こんにちは。こちらはサイト用のAIサポートです。",
+      m2: "チャット履歴は後からまとめて確認できますか？",
+      m3: "はい。すべての会話がタグ付きでインボックスに保存され、後からいつでも確認できます。"
+    },
+    {
+      m1: "안녕하세요! 이 사이트의 AI 지원 도우미입니다.",
+      m2: "여러 팀원이 같은 인박스를 볼 수 있나요?",
+      m3: "네. 팀과 공유되는 인박스를 통해 누가 무엇을 물었는지 모두 함께 확인할 수 있습니다."
+    },
+    {
+      m1: "Cześć! Jestem asystentem AI na Twojej stronie.",
+      m2: "Czy mogę eksportować wszystkie leady do mojego CRM?",
+      m3: "Tak. Możesz w każdej chwili wyeksportować konwersacje i kontakty do pliku CSV i zaimportować je do CRM."
+    },
+    {
+      m1: "Hej! Jag är din AI-assistent här.",
+      m2: "Fungerar widgeten även på mobil?",
+      m3: "Självklart. Den är helt responsiv och anpassar sig till skärmstorleken – både desktop och mobil."
+    },
+    {
+      m1: "Halo! Saya asisten AI untuk website ini.",
+      m2: "Bisakah saya membatasi jumlah jawaban AI per bulan?",
+      m3: "Ya. Kamu bisa memilih paket yang sesuai dan mengupgrade hanya ketika melihat hasil nyata dari asisten."
+    },
+    {
+      m1: "Γεια σου! Είμαι ο AI βοηθός της ιστοσελίδας.",
+      m2: "Μπορώ να δω ποιες ερωτήσεις κάνουν πιο συχνά οι επισκέπτες;",
+      m3: "Φυσικά. Τα tags θεμάτων σου δείχνουν αμέσως τι απασχολεί περισσότερο το κοινό σου."
+    },
+    {
+      m1: "Salut! Sunt asistentul AI de pe acest site.",
+      m2: "Poate widget-ul să capteze lead-uri și când sunt offline?",
+      m3: "Da. Chiar dacă nu răspunde nimeni live, asistentul continuă să strângă întrebări și contacte în inboxul tău."
+    }
+  ];
+
+  let demoIndex = 0;
+  const demoEl1 = document.getElementById("demo-msg-1");
+  const demoEl2 = document.getElementById("demo-msg-2");
+  const demoEl3 = document.getElementById("demo-msg-3");
+  const typingEl = document.getElementById("demo-typing");
+
+  function cycleDemo() {
+    demoIndex = (demoIndex + 1) % demoMsgs.length;
+    const set = demoMsgs[demoIndex];
+    if (!demoEl1 || !demoEl2 || !demoEl3) return;
+
+    typingEl.style.opacity = "0";
+
+    [demoEl1, demoEl2, demoEl3].forEach((el) => {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(6px)";
+    });
+
+    setTimeout(() => {
+      demoEl1.textContent = set.m1;
+      demoEl2.textContent = set.m2;
+      demoEl3.textContent = set.m3;
+
+      [demoEl1, demoEl2, demoEl3].forEach((el, i) => {
+        setTimeout(() => {
+          el.style.opacity = "1";
+          el.style.transform = "translateY(0)";
+        }, i * 140);
+      });
+
+      setTimeout(() => {
+        typingEl.style.opacity = "1";
+      }, 450);
+    }, 260);
+  }
+
+  setInterval(cycleDemo, 9000);
+
+  // Common questions ticker – مثل اسکرول با انگشت، همیشه ~۲ سؤال دیده می‌شه
+  const qaInner = document.getElementById("qa-ticker-inner");
+
+  function cycleFaqTicker() {
+    if (!qaInner || qaInner.children.length === 0) return;
+    const first = qaInner.children[0];
+    const step = first.offsetHeight + 10; // ارتفاع سؤال + فاصله
+
+    qaInner.style.transition = "transform 0.6s ease-out";
+    qaInner.style.transform = `translateY(-${step}px)`;
+
+    setTimeout(() => {
+      qaInner.style.transition = "none";
+      qaInner.appendChild(first);
+      qaInner.style.transform = "translateY(0)";
+    }, 650);
+  }
+
+  setInterval(cycleFaqTicker, 4500);
+
+  // parallax for blobs & dots
+  const blobs = document.querySelectorAll(".bg-blob");
+  const dots = document.querySelectorAll(".bg-dot");
+
+  window.addEventListener("mousemove", (e) => {
+    const { innerWidth, innerHeight } = window;
+    const xNorm = (e.clientX / innerWidth) - 0.5; // -0.5 to 0.5
+    const yNorm = (e.clientY / innerHeight) - 0.5;
+
+    blobs.forEach((blob, idx) => {
+      const intensity = 18 + idx * 6;
+      const tx = xNorm * intensity;
+      const ty = yNorm * intensity * -1;
+      blob.style.setProperty("--tx", `${tx}px`);
+      blob.style.setProperty("--ty", `${ty}px`);
+    });
+
+    dots.forEach((dot, idx) => {
+      const intensity = 32 + idx * 5;
+      const dx = xNorm * intensity;
+      const dy = yNorm * intensity * -1;
+      dot.style.setProperty("--dx", `${dx}px`);
+      dot.style.setProperty("--dy", `${dy}px`);
+    });
+  });
+</script>
+</body>
+</html>

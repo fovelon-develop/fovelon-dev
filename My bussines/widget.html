@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AutoSupport AI – Live widget demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #020819;
+      --bg-soft: #050f27;
+      --card: #050f27;
+      --card-soft: #06152f;
+      --accent: #48c0ff;
+      --accent-2: #34d884;
+      --text-main: #f7fbff;
+      --text-soft: #9aa7c6;
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --danger: #ff6b81;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+        "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at 0% 0%, #0a1540 0, #020819 45%),
+        radial-gradient(circle at 100% 100%, #071a4a 0, #020819 55%);
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* ---------- Global layout ---------- */
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .page::before,
+    .page::after {
+      content: "";
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      border-radius: 999px;
+      filter: blur(40px);
+      opacity: 0.6;
+    }
+
+    .page::before {
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle, #0e2f6e 0, transparent 60%);
+      top: -120px;
+      left: -80px;
+    }
+
+    .page::after {
+      width: 520px;
+      height: 520px;
+      background: radial-gradient(circle, #05275b 0, transparent 60%);
+      bottom: -180px;
+      right: -100px;
+    }
+
+    /* ---------- Liquid amoeba blobs (Model B) ---------- */
+
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    .blob {
+      position: absolute;
+      width: 380px;
+      height: 380px;
+      border-radius: 60% 40% 65% 35% / 55% 45% 60% 40%;
+      background: radial-gradient(circle at 30% 20%, rgba(56, 189, 248, 0.9), transparent 70%);
+      filter: blur(40px);
+      opacity: 0.22;
+      mix-blend-mode: screen;
+      animation: blobMorph 24s ease-in-out infinite alternate;
+      transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0);
+    }
+
+    .blob:nth-child(1) {
+      top: 10%;
+      left: -6%;
+      background: radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.9), transparent 70%);
+    }
+    .blob:nth-child(2) {
+      top: 55%;
+      right: -10%;
+      width: 420px;
+      height: 420px;
+      background: radial-gradient(circle at 40% 30%, rgba(34, 197, 94, 0.9), transparent 70%);
+      animation-delay: 4s;
+    }
+    .blob:nth-child(3) {
+      top: 30%;
+      left: 40%;
+      width: 360px;
+      height: 360px;
+      background: radial-gradient(circle at 50% 40%, rgba(129, 140, 248, 0.95), transparent 70%);
+      animation-delay: 8s;
+    }
+
+    @keyframes blobMorph {
+      0% {
+        border-radius: 60% 40% 65% 35% / 55% 45% 60% 40%;
+        transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(1);
+      }
+      50% {
+        border-radius: 45% 55% 40% 60% / 50% 60% 40% 50%;
+        transform: translate3d(calc(var(--tx, 0px) + 10px), calc(var(--ty, 0px) - 6px), 0) scale(1.05);
+      }
+      100% {
+        border-radius: 55% 45% 50% 50% / 45% 55% 50% 50%;
+        transform: translate3d(calc(var(--tx, 0px) - 6px), calc(var(--ty, 0px) + 8px), 0) scale(1.02);
+      }
+    }
+
+    .bg-dot {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(191, 219, 254, 0.85);
+      box-shadow:
+        0 0 14px rgba(96, 165, 250, 0.9),
+        0 0 30px rgba(30, 64, 175, 0.7);
+      opacity: 0.6;
+      transform: translate3d(var(--dx, 0px), var(--dy, 0px), 0);
+    }
+
+    .bg-dot:nth-child(4) { top: 18%; left: 28%; }
+    .bg-dot:nth-child(5) { top: 70%; left: 18%; }
+    .bg-dot:nth-child(6) { top: 36%; right: 22%; }
+    .bg-dot:nth-child(7) { top: 82%; right: 30%; }
+
+    /* ---------- Header ---------- */
+
+    header {
+      position: relative;
+      z-index: 3;
+      padding: 16px 24px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-orb {
+      position: relative;
+      width: 30px;
+      height: 30px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 20% 15%, #ffffff 0, #cde6ff 24%, #55c4ff 52%, #21bd7a 100%);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.8);
+    }
+
+    .logo-orb::after {
+      content: "";
+      position: absolute;
+      inset: 6px;
+      border-radius: inherit;
+      background: radial-gradient(circle at 30% 20%, #ffffff 0, #e5f6ff 18%, #2489ff 55%, #14945d 100%);
+      opacity: 0.86;
+    }
+
+    .logo-orb::before {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 100%;
+      width: 80px;
+      height: 30px;
+      transform: translateX(-50%);
+      background: radial-gradient(circle, rgba(25, 105, 255, 0.75), transparent 65%);
+      filter: blur(12px);
+      opacity: 0.9;
+      z-index: -1;
+    }
+
+    .brand-text-main {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .brand-text-sub {
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--text-soft);
+    }
+
+    .pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 255, 0.7);
+      background: rgba(5, 16, 42, 0.95);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .pill-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #4ade80;
+      box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.25);
+    }
+
+    .btn-back {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 255, 0.7);
+      background: rgba(5, 16, 42, 0.96);
+      padding: 6px 12px;
+      font-size: 11px;
+      color: #e5edff;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-back:hover {
+      background: rgba(30, 64, 175, 0.95);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.8);
+    }
+
+    .btn-back:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+
+    /* ---------- Main chat card ---------- */
+
+    .shell {
+      position: relative;
+      z-index: 3;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 8px 18px 24px;
+    }
+
+    .chat-layout {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1.1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 900px) {
+      .chat-layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    .chat-card {
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 0 0, rgba(37, 99, 235, 0.32), transparent 60%),
+        #050f27;
+      border: 1px solid rgba(129, 140, 248, 0.7);
+      box-shadow: 0 24px 60px rgba(3, 7, 23, 0.95);
+      padding: 14px 14px 12px;
+      display: flex;
+      flex-direction: column;
+      min-height: 420px;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .assistant-avatar {
+      position: relative;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 20% 15%, #ffffff 0, #e5f2ff 18%, #3b82f6 55%, #22c55e 100%);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .assistant-avatar-inner {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      border: 2px solid rgba(3, 7, 18, 0.8);
+      background: radial-gradient(circle at 30% 20%, #ffffff 0, #e5f6ff 18%, #2563eb 55%, #22c55e 100%);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.9);
+      position: relative;
+    }
+
+    .assistant-avatar-inner::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border-radius: inherit;
+      border: 2px solid rgba(15, 23, 42, 0.7);
+      box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.4);
+      opacity: 0.9;
+    }
+
+    .chat-header-text-main {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .chat-header-text-sub {
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+
+    /* ---------- Messages area ---------- */
+
+    .chat-messages {
+      margin-top: 4px;
+      flex: 1;
+      border-radius: 18px;
+      border: 1px solid rgba(103, 148, 255, 0.5);
+      background: radial-gradient(
+          circle at 0 0,
+          rgba(30, 64, 175, 0.42),
+          transparent 52%
+        ),
+        rgba(3, 7, 18, 0.96);
+      padding: 10px 10px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      overflow-y: auto;
+      max-height: 360px;
+    }
+
+    .msg-row {
+      display: flex;
+    }
+    .msg-row.bot {
+      justify-content: flex-start;
+    }
+    .msg-row.user {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: 88%;
+      padding: 8px 11px;
+      border-radius: 16px;
+      font-size: 13px;
+      line-height: 1.45;
+      position: relative;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      white-space: pre-line;
+    }
+
+    .bubble.bot {
+      background: rgba(17, 24, 39, 0.96);
+      border: 1px solid rgba(148, 163, 255, 0.6);
+      color: #e5edff;
+      box-shadow: 0 10px 30px rgba(6, 12, 33, 0.9);
+    }
+
+    .bubble.user {
+      background: linear-gradient(135deg, #3b82f6, #22c55e);
+      color: #fdfdfd;
+      box-shadow: 0 10px 26px rgba(35, 141, 255, 0.65);
+    }
+
+    .bubble-meta {
+      margin-top: 2px;
+      font-size: 10px;
+      color: rgba(148, 163, 255, 0.8);
+    }
+
+    .typing {
+      font-size: 11px;
+      color: var(--text-soft);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
+    .typing-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .typing-dots span {
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(148, 163, 255, 0.8);
+      animation: typingBlink 1.2s infinite ease-in-out;
+    }
+    .typing-dots span:nth-child(2) {
+      animation-delay: 0.18s;
+    }
+    .typing-dots span:nth-child(3) {
+      animation-delay: 0.32s;
+    }
+
+    @keyframes typingBlink {
+      0%, 80%, 100% {
+        opacity: 0.2;
+        transform: translateY(0);
+      }
+      30% {
+        opacity: 1;
+        transform: translateY(-2px);
+      }
+    }
+
+    /* ---------- Composer ---------- */
+
+    .composer {
+      margin-top: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .composer-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .composer-input-wrap {
+      flex: 1;
+      border-radius: 999px;
+      background: rgba(3, 7, 18, 0.96);
+      border: 1px solid rgba(148, 163, 255, 0.5);
+      padding: 4px 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .composer-input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text-main);
+      font-size: 13px;
+      flex: 1;
+      padding: 6px 4px;
+    }
+
+    .composer-input::placeholder {
+      color: rgba(148, 163, 255, 0.7);
+    }
+
+    .btn-send {
+      border-radius: 999px;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, #3b82f6, #22c55e);
+      color: #fdfdfd;
+      box-shadow: 0 10px 26px rgba(37, 99, 235, 0.7);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .btn-send:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 32px rgba(37, 99, 235, 0.85);
+      filter: brightness(1.05);
+    }
+
+    .btn-send:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 20px rgba(30, 64, 175, 0.9);
+    }
+
+    .composer-meta {
+      font-size: 11px;
+      color: var(--text-soft);
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .composer-meta strong {
+      color: #e5edff;
+      font-weight: 500;
+    }
+
+    /* ---------- Right column: session + starter languages ---------- */
+
+    .side-card {
+      border-radius: 24px;
+      background:
+        radial-gradient(circle at 0 0, rgba(37, 99, 235, 0.3), transparent 60%),
+        #050f27;
+      border: 1px solid rgba(129, 140, 248, 0.6);
+      box-shadow: 0 22px 52px rgba(3, 7, 23, 0.96);
+      padding: 14px 14px 16px;
+      font-size: 12px;
+      color: var(--text-soft);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .side-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+      color: #e5edff;
+    }
+
+    .pill-soft {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 255, 0.6);
+      background: rgba(5, 16, 42, 0.96);
+      padding: 4px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .meta-item-label {
+      font-size: 11px;
+      color: rgba(148, 163, 255, 0.9);
+      margin-bottom: 1px;
+    }
+
+    .meta-item-value {
+      font-size: 12px;
+      color: #e5edff;
+    }
+
+    .language-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .lang-tag {
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 255, 0.55);
+      background: rgba(6, 15, 35, 0.96);
+      padding: 3px 8px;
+      font-size: 11px;
+      cursor: pointer;
+      color: #e5edff;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .lang-tag:hover {
+      background: rgba(37, 99, 235, 0.9);
+      transform: translateY(-1px);
+    }
+
+    .note {
+      font-size: 11px;
+      color: var(--text-soft);
+      margin-top: 4px;
+    }
+
+    .small-divider {
+      margin: 6px 0;
+      height: 1px;
+      background: radial-gradient(circle, rgba(148, 163, 255, 0.6), transparent 65%);
+      opacity: 0.6;
+    }
+
+    .topic-list {
+      list-style: none;
+      margin: 4px 0 0;
+      padding-left: 0;
+      font-size: 11px;
+      color: var(--text-soft);
+    }
+    .topic-list li::before {
+      content: "• ";
+      color: #6ee7b7;
+    }
+
+    /* ---------- Responsive ---------- */
+
+    @media (max-width: 640px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      .header-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+  <!-- Amoeba blobs + micro dots -->
+  <div class="bg-layer">
+    <div class="blob"></div>
+    <div class="blob"></div>
+    <div class="blob"></div>
+    <div class="bg-dot"></div>
+    <div class="bg-dot"></div>
+    <div class="bg-dot"></div>
+    <div class="bg-dot"></div>
+  </div>
+
+  <header>
+    <div class="brand">
+      <div class="logo-orb"></div>
+      <div>
+        <div class="brand-text-main">AutoSupport AI · Live widget</div>
+        <div class="brand-text-sub" id="brand-sub">
+          Multi-language AI support & lead capture.
+        </div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="pill">
+        <span class="pill-dot"></span>
+        <span>Assistant is online</span>
+      </div>
+      <span id="session-short-meta">Detecting visitor country…</span>
+      <button class="btn-back" type="button" onclick="window.location.href='landing.html'">
+        ← Back to main site
+      </button>
+    </div>
+  </header>
+
+  <main class="shell">
+    <div class="chat-layout">
+      <!-- Left: chat -->
+      <section class="chat-card" aria-label="Chat widget demo">
+        <div class="chat-header">
+          <div class="chat-header-left">
+            <div class="assistant-avatar">
+              <div class="assistant-avatar-inner"></div>
+            </div>
+            <div>
+              <div class="chat-header-text-main">Support assistant</div>
+              <div class="chat-header-text-sub">
+                Ask anything about your website, pricing or integration.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+          <!-- messages rendered here -->
+        </div>
+
+        <div class="composer">
+          <div class="composer-row">
+            <div class="composer-input-wrap">
+              <input
+                id="chat-input"
+                class="composer-input"
+                type="text"
+                autocomplete="off"
+                placeholder="Ask in any language – pricing, setup, languages, integrations…"
+              />
+            </div>
+            <button class="btn-send" id="send-btn">Send</button>
+          </div>
+          <div class="composer-meta">
+            <span>
+              Session language: <strong id="session-language">Detecting…</strong>
+            </span>
+            <span id="session-topic">Topics detected: –</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right: meta & starter languages -->
+      <aside class="side-card" aria-label="Session meta & languages">
+        <div>
+          <div class="side-title">Session overview</div>
+          <div class="meta-grid">
+            <div>
+              <div class="meta-item-label">Visitor country</div>
+              <div class="meta-item-value" id="meta-country">Detecting…</div>
+            </div>
+            <div>
+              <div class="meta-item-label">Approx. language</div>
+              <div class="meta-item-value" id="meta-lang">–</div>
+            </div>
+            <div>
+              <div class="meta-item-label">Messages sent</div>
+              <div class="meta-item-value" id="meta-msg-count">0</div>
+            </div>
+            <div>
+              <div class="meta-item-label">Estimated intent</div>
+              <div class="meta-item-value" id="meta-intent">–</div>
+            </div>
+          </div>
+          <p class="note">
+            This data is stored locally in your browser and can be sent with each lead to your backend.
+          </p>
+        </div>
+
+        <div class="small-divider"></div>
+
+        <div>
+          <div class="side-title">Try asking in another language</div>
+          <p class="note">
+            These tags are just examples – you can ask in almost any language and the assistant will follow.
+          </p>
+          <div class="language-tags" id="language-tags">
+            <!-- tags appended by JS -->
+          </div>
+        </div>
+
+        <div class="small-divider"></div>
+
+        <div>
+          <div class="side-title">What the assistant is good at</div>
+          <ul class="topic-list">
+            <li>Explaining your pricing & plans</li>
+            <li>Answering “where do I install the script?” questions</li>
+            <li>Handling multi-language audiences on one site</li>
+            <li>Capturing leads when AI isn’t fully confident</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ---------- Session & conversation state ----------
+  const BUSINESS_ID = 1;
+
+  let sessionMeta = {
+    country: null,
+    countryCode: null,
+    language: null,
+    messageCount: 0,
+    topics: new Set(),
+    intentScore: 0,
+    startedAt: Date.now()
+  };
+
+  let messages = [];
+
+  const chatEl = document.getElementById("chat-messages");
+  const inputEl = document.getElementById("chat-input");
+  const sendBtn = document.getElementById("send-btn");
+
+  const metaCountryEl = document.getElementById("meta-country");
+  const metaLangEl = document.getElementById("meta-lang");
+  const metaMsgCountEl = document.getElementById("meta-msg-count");
+  const metaIntentEl = document.getElementById("meta-intent");
+  const sessionLangEl = document.getElementById("session-language");
+  const sessionTopicEl = document.getElementById("session-topic");
+  const sessionShortMetaEl = document.getElementById("session-short-meta");
+  const langTagsEl = document.getElementById("language-tags");
+
+  let isSending = false;
+  let typingEl = null;
+
+  // ---------- Language & topic detection (simple client-side) ----------
+
+  function detectLanguage(text) {
+    if (/[اآبپتثجچحخدذرزژسشصضطظعغفقکگلمنوهی]/.test(text)) return "Persian / Arabic-like";
+    if (/[А-Яа-яЁё]/.test(text)) return "Russian / Cyrillic";
+    if (/[اأإء]/.test(text) && !/[پچژگ]/.test(text)) return "Arabic";
+    if (/[áéíóúñ¿¡]/i.test(text)) return "Spanish / Portuguese";
+    if (/[äöüß]/i.test(text)) return "German";
+    if (/[éèàçù]/i.test(text)) return "French";
+    if (/[\u3040-\u30ff]/.test(text)) return "Japanese";
+    if (/[\u4e00-\u9fff]/.test(text)) return "Chinese";
+    if (/[ğüşöçıİ]/i.test(text)) return "Turkish";
+    if (/[ąćęłńśźż]/i.test(text)) return "Polish";
+    if (/[åøæ]/i.test(text)) return "Nordic";
+    return "English / Latin";
+  }
+
+  function detectTopic(text) {
+    const t = text.toLowerCase();
+    if (t.match(/price|pricing|cost|plan|month|subscription|fee/)) return "Pricing";
+    if (t.match(/install|script|code|snippet|wordpress|webflow|integrat|embed/)) return "Setup / Integration";
+    if (t.match(/language|multilingual|translate|farsi|persian|arabic|spanish|german|russian/)) return "Languages";
+    if (t.match(/support|ticket|inbox|lead|crm|contact/)) return "Support / Inbox";
+    if (t.match(/cancel|refund|upgrade|downgrade/)) return "Account / Billing";
+    return "General";
+  }
+
+  function updateSessionMetaFromMessage(msgText) {
+    const lang = detectLanguage(msgText);
+    const topic = detectTopic(msgText);
+    sessionMeta.language = sessionMeta.language || lang;
+    sessionMeta.messageCount += 1;
+    sessionMeta.topics.add(topic);
+
+    let score = sessionMeta.intentScore;
+    if (topic === "Pricing" || /buy|purchase|pay|subscribe|client|customers/i.test(msgText)) {
+      score += 2;
+    } else if (topic === "Setup / Integration") {
+      score += 1;
+    } else {
+      score += 0.5;
+    }
+    sessionMeta.intentScore = Math.min(10, score);
+
+    renderSessionMeta();
+  }
+
+  function renderSessionMeta() {
+    metaMsgCountEl.textContent = sessionMeta.messageCount.toString();
+    metaLangEl.textContent = sessionMeta.language || "Detecting…";
+
+    let intentLabel = "Exploring";
+    if (sessionMeta.intentScore >= 8) intentLabel = "Very high purchase intent";
+    else if (sessionMeta.intentScore >= 5) intentLabel = "High interest";
+    else if (sessionMeta.intentScore >= 3) intentLabel = "Curious";
+    metaIntentEl.textContent = intentLabel;
+
+    sessionLangEl.textContent = sessionMeta.language || "Any language";
+    const topicsArr = Array.from(sessionMeta.topics);
+    sessionTopicEl.textContent = topicsArr.length
+      ? "Topics detected: " + topicsArr.join(", ")
+      : "Topics detected: –";
+  }
+
+  // ---------- GeoIP (country detection) ----------
+
+  async function detectCountry() {
+    try {
+      const res = await fetch("https://ipapi.co/json/");
+      if (!res.ok) throw new Error("geo failed");
+      const data = await res.json();
+      sessionMeta.country = data.country_name || null;
+      sessionMeta.countryCode = data.country || null;
+
+      const label = sessionMeta.country
+        ? `${sessionMeta.country} (${sessionMeta.countryCode || ""})`
+        : "Unknown";
+
+      metaCountryEl.textContent = label;
+      sessionShortMetaEl.textContent = sessionMeta.country
+        ? `Visitor from ${sessionMeta.country}`
+        : "Visitor country not detected";
+
+    } catch (e) {
+      metaCountryEl.textContent = "Not available";
+      sessionShortMetaEl.textContent = "Visitor country not available";
+    }
+  }
+
+  // ---------- Rendering messages ----------
+
+  function renderMessages() {
+    chatEl.innerHTML = "";
+    messages.forEach((m) => {
+      const row = document.createElement("div");
+      row.className = "msg-row " + (m.role === "assistant" ? "bot" : "user");
+
+      const bubble = document.createElement("div");
+      bubble.className = "bubble " + (m.role === "assistant" ? "bot" : "user");
+      bubble.textContent = m.text;
+      row.appendChild(bubble);
+
+      if (m.meta) {
+        const meta = document.createElement("div");
+        meta.className = "bubble-meta";
+        meta.textContent = m.meta;
+        bubble.appendChild(meta);
+      }
+
+      chatEl.appendChild(row);
+    });
+
+    if (typingEl) {
+      chatEl.appendChild(typingEl);
+    }
+
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function showTyping() {
+    if (typingEl) return;
+    typingEl = document.createElement("div");
+    typingEl.className = "typing";
+    typingEl.innerHTML = `
+      <span>Assistant is typing</span>
+      <span class="typing-dots"><span></span><span></span><span></span></span>
+    `;
+    chatEl.appendChild(typingEl);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
+
+  function hideTyping() {
+    if (!typingEl) return;
+    typingEl.remove();
+    typingEl = null;
+  }
+
+  // ---------- Local storage ----------
+
+  function saveConversation() {
+    try {
+      const existing = JSON.parse(localStorage.getItem("autosupport_conversations") || "[]");
+      const entry = {
+        startedAt: sessionMeta.startedAt,
+        country: sessionMeta.country,
+        countryCode: sessionMeta.countryCode,
+        language: sessionMeta.language,
+        intentScore: sessionMeta.intentScore,
+        topics: Array.from(sessionMeta.topics),
+        messageCount: sessionMeta.messageCount,
+        messages
+      };
+      existing.push(entry);
+      localStorage.setItem("autosupport_conversations", JSON.stringify(existing));
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  // ---------- Backend call ----------
+
+  async function sendToBackend(messageText) {
+    const payload = {
+      message: messageText,
+      business_id: BUSINESS_ID,
+      meta: {
+        country: sessionMeta.country,
+        countryCode: sessionMeta.countryCode,
+        language: sessionMeta.language,
+        intentScore: sessionMeta.intentScore,
+        topics: Array.from(sessionMeta.topics)
+      }
+    };
+
+    try {
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+      const data = await res.json();
+      const reply = data.reply || data.answer || data.message ||
+        "Thank you for your message. Your question has been recorded and our team will contact you soon.";
+      return reply;
+    } catch (e) {
+      console.error(e);
+      return "I couldn’t reach the AI engine right now. Your question is saved and a human will follow up manually.";
+    }
+  }
+
+  // ---------- Sending flow ----------
+
+  async function handleSend() {
+    const text = (inputEl.value || "").trim();
+    if (!text || isSending) return;
+
+    const lang = detectLanguage(text);
+    const topic = detectTopic(text);
+    updateSessionMetaFromMessage(text);
+
+    const metaStr = `${lang} · Topic: ${topic}`;
+    messages.push({
+      role: "user",
+      text,
+      ts: Date.now(),
+      lang,
+      topic,
+      meta: metaStr
+    });
+
+    inputEl.value = "";
+    renderMessages();
+
+    isSending = true;
+    showTyping();
+
+    const reply = await sendToBackend(text);
+
+    hideTyping();
+
+    messages.push({
+      role: "assistant",
+      text: reply,
+      ts: Date.now(),
+      lang: "Assistant",
+      topic: topic === "General" ? "Follow-up" : topic,
+      meta: `AutoSupport AI · based on your FAQ`
+    });
+    renderMessages();
+    saveConversation();
+    isSending = false;
+  }
+
+  sendBtn.addEventListener("click", handleSend);
+  inputEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  });
+
+  // ---------- Starter messages – 20 languages ----------
+
+  const starterQuestions = [
+    { label: "English", q: "How much does AutoSupport AI cost if I have 3 websites?" },
+    { label: "Deutsch", q: "Kann ich den Assistenten auf mehreren Domains gleichzeitig installieren?" },
+    { label: "Français", q: "Est-ce que l'assistant peut répondre en plusieurs langues sur le même site ?" },
+    { label: "Español", q: "¿El asistente puede captar leads incluso cuando no está seguro de la respuesta?" },
+    { label: "Português", q: "Como eu instalo o widget no meu site WordPress sem saber programar?" },
+    { label: "Русский", q: "Можно ли увидеть все диалоги в одном инбоксе с тегами по темам?" },
+    { label: "فارسی", q: "اگر چند تا سایت داشته باشم، هزینه پلن‌ها چطور حساب می‌شود؟" },
+    { label: "العربية", q: "هل يدعم المساعد الزوار الذين يكتبون بالعربية والإنجليزية في نفس الجلسة؟" },
+    { label: "Türkçe", q: "Widget'i Webflow ve özel React projemde aynı anda kullanabilir miyim?" },
+    { label: "Italiano", q: "Posso personalizzare il testo del widget e i messaggi de benvenuto?" },
+    { label: "Nederlands", q: "Werkt deze AI-assistent ook op statische landing pages zonder backend?" },
+    { label: "Polski", q: "Czy mogę eksportować wszystkie leady do pliku CSV z tematami pytań?" },
+    { label: "Українська", q: "Чи можна додати власний FAQ, щоб асистент відповідав тільки з нього?" },
+    { label: "日本語", q: "このウィジェットは日本語と英語の両方でサポートできますか？" },
+    { label: "中文", q: "这个助手能根据常见问题自动回复并收集潜在客户吗？" },
+    { label: "हिन्दी", q: "क्या यह असिस्टेंट मेरे कोचिंग वेबसाइट पर 24/7 सवालों के जवाब दे सकता है?" },
+    { label: "Svenska", q: "Kan assistenten känna av vilket språk besökaren använder automatiskt?" },
+    { label: "Norsk", q: "Får jeg se hvilke sider leads kommer fra når de skriver i widgeten?" },
+    { label: "Dansk", q: "Hvordan håndterer systemet kunder med både dansk og engelsk på samme side?" },
+    { label: "Kurdî", q: "Dikarim li ser çend malperan bi heman hesabê widgetê saz bikim?" }
+  ];
+
+  function renderLanguageTags() {
+    starterQuestions.forEach((item) => {
+      const tag = document.createElement("button");
+      tag.type = "button";
+      tag.className = "lang-tag";
+      tag.textContent = item.label;
+      tag.addEventListener("click", () => {
+        inputEl.value = item.q;
+        inputEl.focus();
+      });
+      langTagsEl.appendChild(tag);
+    });
+  }
+
+  // ---------- Initial welcome messages ----------
+
+  function initWelcome() {
+    const welcome =
+      "Hi! I'm your AI support assistant. Ask me anything about pricing, setup, or how to install this widget on your site.";
+    const extra =
+      "You can write in any language – I’ll answer, tag the topic and you’ll see the lead in your inbox.";
+
+    messages.push({
+      role: "assistant",
+      text: welcome,
+      ts: Date.now(),
+      lang: "Assistant",
+      topic: "General",
+      meta: "Understands 20+ languages · trained on your FAQ"
+    });
+    messages.push({
+      role: "assistant",
+      text: extra,
+      ts: Date.now(),
+      lang: "Assistant",
+      topic: "General",
+      meta: "Try asking in Persian, Spanish, German or Arabic"
+    });
+    renderMessages();
+  }
+
+  // ---------- Parallax for blobs & dots (mouse move) ----------
+
+  const blobs = document.querySelectorAll(".blob");
+  const dots = document.querySelectorAll(".bg-dot");
+
+  window.addEventListener("mousemove", (e) => {
+    const { innerWidth, innerHeight } = window;
+    const xNorm = e.clientX / innerWidth - 0.5;
+    const yNorm = e.clientY / innerHeight - 0.5;
+
+    blobs.forEach((blob, idx) => {
+      const intensity = 26 + idx * 8;
+      blob.style.setProperty("--tx", `${xNorm * intensity}px`);
+      blob.style.setProperty("--ty", `${-yNorm * intensity}px`);
+    });
+
+    dots.forEach((dot, idx) => {
+      const intensity = 40 + idx * 6;
+      dot.style.setProperty("--dx", `${xNorm * intensity}px`);
+      dot.style.setProperty("--dy", `${-yNorm * intensity}px`);
+    });
+  });
+
+  // ---------- Boot ----------
+
+  (function boot() {
+    detectCountry();
+    renderLanguageTags();
+    initWelcome();
+    renderSessionMeta();
+  })();
+</script>
+</body>
+</html>
