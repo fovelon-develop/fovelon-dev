@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
@@ -187,3 +187,12 @@ def list_leads_path(
 
 
 
+
+# Compatibility redirects (so old links like /widget.html keep working)
+@app.get("/widget.html", include_in_schema=False)
+def widget_html_redirect():
+    return RedirectResponse(url="/widget", status_code=302)
+
+@app.get("/inbox.html", include_in_schema=False)
+def inbox_html_redirect():
+    return RedirectResponse(url="/inbox", status_code=302)
