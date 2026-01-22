@@ -258,7 +258,18 @@
       width:calc(100% + 80px);
       height:calc(100% + 80px);
       filter: blur(0px);
-      opacity:.95;
+      opacity:1;
+    }
+
+    .orbFallback{
+      position:absolute;
+      width:min(380px, 68vw);
+      height:auto;
+      display:none;
+      filter: drop-shadow(0 0 42px rgba(80,190,255,.35));
+      opacity:.98;
+      pointer-events:none;
+      transform: translateZ(0);
     }
 
     .orbWrap{
@@ -800,6 +811,7 @@ body{ overflow-x:hidden; }
           
           <div class="orbField" aria-hidden="true">
             <canvas id="orbCanvas" class="orbCanvas"></canvas>
+            <img id="orbFallback" class="orbFallback" src="assets/blob.png" alt="Fovelon entity" />
 
             <div class="orbOverlay">
 <div class="orbMessage" id="orbMessage" aria-live="polite">
@@ -994,7 +1006,8 @@ body{ overflow-x:hidden; }
     </section>
   </main>
 
-  <script>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+<script>
     // ===== Reveal on focus & section awareness =====
     const root = document.getElementById('scrollRoot');
     const revealEls = Array.from(document.querySelectorAll('.reveal'));
@@ -1065,324 +1078,331 @@ body{ overflow-x:hidden; }
 
   
 
-    // ===== Living Orb (energy creature) =====
+    
+    // ===== 3D Venom-Blob (Three.js) =====
     (function(){
       const canvas = document.getElementById('orbCanvas');
       const field = canvas?.closest('.orbField');
-      const msg = document.getElementById('orbMessage');
-      const msgInner = document.getElementById('orbMessageInner');
-
+      const fallbackImg = document.getElementById('orbFallback');
       if(!canvas || !field) return;
 
-      const ctx = canvas.getContext('2d', { alpha: true });
-      const TAU = Math.PI * 2;
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isSmall = window.matchMedia && window.matchMedia('(max-width: 520px)').matches;
+      const isMed = window.matchMedia && window.matchMedia('(max-width: 920px)').matches;
 
-      const state = {
-        w: 0, h: 0, dpr: Math.min(2, window.devicePixelRatio || 1),
-        t: 0,
-        pointer: { x: 0.2, y: -0.1, active: false },
-        blobs: [],
-        sparks: []
+      // crude low-end heuristic for performance-friendly mobile
+      const cores = navigator.hardwareConcurrency || 4;
+      const mem = navigator.deviceMemory || 4;
+      const lowEnd = isSmall || cores <= 4 || mem <= 4;
+
+      // WebGL support check
+      const canWebGL = (function(){
+        try{
+          const c = document.createElement('canvas');
+          return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
+        }catch(e){ return false; }
+      })();
+
+      if(!canWebGL || prefersReduced){
+        // Use image fallback (keeps the "from another world" vibe, no perf hit)
+        canvas.style.display = 'none';
+        if(fallbackImg) fallbackImg.style.display = 'block';
+        return;
+      }
+
+      if(typeof THREE === 'undefined'){
+        // If Three didn't load for any reason, fallback gracefully.
+        canvas.style.display = 'none';
+        if(fallbackImg) fallbackImg.style.display = 'block';
+        return;
+      }
+
+      const renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: !lowEnd,
+        premultipliedAlpha: true,
+        powerPreference: lowEnd ? 'low-power' : 'high-performance'
+      });
+
+      const scene = new THREE.Scene();
+
+      const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
+      camera.position.set(0, 0, 3.6);
+
+      const pointer = new THREE.Vector2(0,0);
+      let targetPointer = new THREE.Vector2(0,0);
+
+      const uniforms = {
+        uTime: { value: 0 },
+        uPointer: { value: new THREE.Vector2(0,0) },
+        uLowEnd: { value: lowEnd ? 1.0 : 0.0 }
       };
 
-      const messages = [
-  "Instant replies — 24/7, even when you’re offline.",
-  "Multi‑language out of the box — speak your customer’s language.",
-  "Simple hosted demo — show it live, then embed later."
-];
+      const vert = `
+        varying vec3 vPos;
+        varying vec3 vNormal;
+        varying vec3 vViewDir;
+        uniform float uTime;
+        uniform vec2 uPointer;
+
+        // Classic simplex noise (short, shader-friendly)
+        vec3 mod289(vec3 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec4 mod289(vec4 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
+        vec4 permute(vec4 x){ return mod289(((x*34.0)+1.0)*x); }
+        vec4 taylorInvSqrt(vec4 r){ return 1.79284291400159 - 0.85373472095314 * r; }
+
+        float snoise(vec3 v){
+          const vec2  C = vec2(1.0/6.0, 1.0/3.0);
+          const vec4  D = vec4(0.0, 0.5, 1.0, 2.0);
+
+          vec3 i  = floor(v + dot(v, C.yyy));
+          vec3 x0 = v - i + dot(i, C.xxx);
+
+          vec3 g = step(x0.yzx, x0.xyz);
+          vec3 l = 1.0 - g;
+          vec3 i1 = min(g.xyz, l.zxy);
+          vec3 i2 = max(g.xyz, l.zxy);
+
+          vec3 x1 = x0 - i1 + C.xxx;
+          vec3 x2 = x0 - i2 + C.yyy;
+          vec3 x3 = x0 - D.yyy;
+
+          i = mod289(i);
+          vec4 p = permute( permute( permute(
+                    i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                  + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                  + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+
+          float n_ = 0.142857142857;
+          vec3  ns = n_ * D.wyz - D.xzx;
+
+          vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+
+          vec4 x_ = floor(j * ns.z);
+          vec4 y_ = floor(j - 7.0 * x_);
+
+          vec4 x = x_ * ns.x + ns.yyyy;
+          vec4 y = y_ * ns.x + ns.yyyy;
+          vec4 h = 1.0 - abs(x) - abs(y);
+
+          vec4 b0 = vec4(x.xy, y.xy);
+          vec4 b1 = vec4(x.zw, y.zw);
+
+          vec4 s0 = floor(b0)*2.0 + 1.0;
+          vec4 s1 = floor(b1)*2.0 + 1.0;
+          vec4 sh = -step(h, vec4(0.0));
+
+          vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+          vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+
+          vec3 p0 = vec3(a0.xy, h.x);
+          vec3 p1 = vec3(a0.zw, h.y);
+          vec3 p2 = vec3(a1.xy, h.z);
+          vec3 p3 = vec3(a1.zw, h.w);
+
+          vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+          p0 *= norm.x;
+          p1 *= norm.y;
+          p2 *= norm.z;
+          p3 *= norm.w;
+
+          vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+          m = m * m;
+          return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+        }
+
+        void main(){
+          vec3 pos = position;
+          vec3 nrm = normal;
+
+          // "oil/venom" thick deformation: compact + aggressive
+          float t = uTime;
+          float n1 = snoise(pos*1.55 + vec3(0.0, 0.0, t*0.35));
+          float n2 = snoise(pos*2.85 + vec3(t*0.18, -t*0.22, t*0.15));
+          float n3 = snoise(pos*4.20 + vec3(-t*0.12, t*0.10, -t*0.16));
+
+          float bulge = 0.12*n1 + 0.07*n2 + 0.035*n3;
+
+          // pointer "threat" pull: slightly elongates toward cursor
+          vec3 pull = normalize(vec3(uPointer.xy, 0.35));
+          float aim = clamp(dot(nrm, pull), -1.0, 1.0);
+          float threat = pow(max(0.0, aim), 2.2) * 0.10;
+
+          float disp = bulge + threat;
+          pos += nrm * disp;
+
+          vec4 world = modelMatrix * vec4(pos, 1.0);
+          vPos = world.xyz;
+
+          vec3 nWorld = normalize(mat3(modelMatrix) * nrm);
+          vNormal = nWorld;
+
+          vec3 viewDir = normalize(cameraPosition - world.xyz);
+          vViewDir = viewDir;
+
+          gl_Position = projectionMatrix * viewMatrix * world;
+        }
+      `;
+
+      const frag = `
+        precision highp float;
+        varying vec3 vPos;
+        varying vec3 vNormal;
+        varying vec3 vViewDir;
+        uniform float uTime;
+
+        float sat(float x){ return clamp(x, 0.0, 1.0); }
+
+        void main(){
+          vec3 N = normalize(vNormal);
+          vec3 V = normalize(vViewDir);
+
+          // Two subtle lights, not "cartoony"
+          vec3 L1 = normalize(vec3(0.35, 0.55, 0.9));
+          vec3 L2 = normalize(vec3(-0.6, -0.25, 0.8));
+
+          float diff = sat(dot(N, L1))*0.55 + sat(dot(N, L2))*0.35;
+
+          // Specular (wet oil)
+          vec3 H1 = normalize(L1 + V);
+          float spec = pow(sat(dot(N, H1)), 70.0) * 0.85;
+
+          // Fresnel edge glow (cyan with a tiny purple fringe)
+          float fres = pow(1.0 - sat(dot(N, V)), 3.2);
+          vec3 edgeCyan = vec3(0.08, 0.75, 1.0);
+          vec3 edgePurple = vec3(0.65, 0.35, 1.0);
+          vec3 edge = mix(edgeCyan, edgePurple, 0.18) * fres;
+
+          // Deep body (inky blue oil), with inner core pressure
+          float r = length(vPos);
+          float core = exp(-r*2.6);                 // bright center
+          float pulse = 0.55 + 0.45*sin(uTime*0.9);
+          vec3 coreCol = vec3(0.40, 0.92, 1.0) * core * pulse;
+
+          vec3 body = vec3(0.01, 0.07, 0.14);
+          vec3 mid = vec3(0.03, 0.22, 0.45);
+
+          vec3 col = mix(body, mid, diff);
+          col += coreCol * 1.2;
+          col += edge * 1.55;
+          col += spec * vec3(0.85, 0.95, 1.0);
+
+          // Slight chromatic aberration illusion near edges (no outer ring)
+          col.r += fres * 0.06;
+          col.b += fres * 0.10;
+
+          float alpha = sat(0.80 + fres*0.35 + core*0.25);
+          gl_FragColor = vec4(col, alpha);
+        }
+      `;
+
+      // Geometry detail depends on device (performance-friendly mobile)
+      const detail = lowEnd ? 5 : 6;
+      const geo = new THREE.IcosahedronGeometry(1.0, detail);
+      const mat = new THREE.ShaderMaterial({
+        uniforms,
+        vertexShader: vert,
+        fragmentShader: frag,
+        transparent: true,
+        depthWrite: false
+      });
+
+      const mesh = new THREE.Mesh(geo, mat);
+      scene.add(mesh);
+
+      // Subtle background particles (very cheap)
+      const stars = new THREE.BufferGeometry();
+      const starCount = lowEnd ? 120 : 260;
+      const positions = new Float32Array(starCount * 3);
+      for(let i=0;i<starCount;i++){
+        positions[i*3+0] = (Math.random()*2-1) * 4.2;
+        positions[i*3+1] = (Math.random()*2-1) * 3.2;
+        positions[i*3+2] = -Math.random() * 6.0 - 1.5;
+      }
+      stars.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      const starMat = new THREE.PointsMaterial({ size: lowEnd ? 0.012 : 0.016, transparent:true, opacity:0.6, depthWrite:false });
+      const starPts = new THREE.Points(stars, starMat);
+      scene.add(starPts);
 
       function resize(){
-        const r = field.getBoundingClientRect();
-        state.w = Math.max(280, Math.floor(r.width));
-        state.h = Math.max(280, Math.floor(r.height));
-        canvas.width = Math.floor(state.w * state.dpr);
-        canvas.height = Math.floor(state.h * state.dpr);
-        canvas.style.width = state.w + "px";
-        canvas.style.height = state.h + "px";
+        const rect = field.getBoundingClientRect();
+        const w = Math.max(1, rect.width);
+        const h = Math.max(1, rect.height);
+
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+
+        // Pixel ratio control for mobile perf
+        const dpr = Math.min(window.devicePixelRatio || 1, lowEnd ? 1.35 : 2.0);
+        renderer.setPixelRatio(dpr);
+        renderer.setSize(w, h, false);
       }
 
-      function rand(min, max){ return min + Math.random() * (max - min); }
-      function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+      resize();
+      window.addEventListener('resize', resize, { passive:true });
 
-      function init(){
-        resize();
+      // Pointer interaction
+      function onMove(e){
+        const rect = field.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        targetPointer.set((x-0.5)*2.0, -(y-0.5)*2.0);
+      }
+      window.addEventListener('pointermove', onMove, { passive:true });
 
-        // blobs: colored plasma pockets inside the sphere
-        state.blobs = Array.from({length: 9}, (_,i)=>({
-          a: rand(0, TAU),
-          sp: rand(0.15, 0.55) * (i%2?1:-1),
-          r: rand(0.18, 0.42),
-          p: rand(0, 1),
-          hue: rand(180, 330),
-          sat: rand(68, 92),
-          lum: rand(52, 68),
-          alpha: rand(0.22, 0.44)
-        }));
-
-        // pointer interaction
-        field.addEventListener('pointermove', (e)=>{
-          const b = field.getBoundingClientRect();
-          const nx = (e.clientX - b.left) / b.width;
-          const ny = (e.clientY - b.top) / b.height;
-          state.pointer.x = clamp(nx*2-1, -1, 1);
-          state.pointer.y = clamp(ny*2-1, -1, 1);
-          state.pointer.active = true;
-        }, {passive:true});
-
-        field.addEventListener('pointerleave', ()=>{
-          state.pointer.active = false;
+      // Pause when offscreen (mobile-friendly)
+      let running = true;
+      const io = new IntersectionObserver((entries)=>{
+        entries.forEach(en=>{
+          running = en.isIntersecting;
+          if(running) raf();
         });
+      }, { threshold: 0.15 });
+      io.observe(field);
 
-        // message cycle
-        if(msg && msgInner){
-          let i = 0;
-          setInterval(()=>{
-            i = (i + 1) % messages.length;
-            msgInner.textContent = messages[i];
-            msg.classList.remove('isBurst');
-            // force reflow so animation restarts
-            void msg.offsetWidth;
-            msg.classList.add('isBurst');
-            burstSparks();
-          }, 5200);
-        }
+      let last = performance.now();
+      let rafId = 0;
 
-        requestAnimationFrame(loop);
-      }
+      function raf(){
+        if(!running) return;
+        rafId = requestAnimationFrame(raf);
 
-      function burstSparks(){
-        // emit a burst mostly toward the message direction (to the right)
-        const base = 0; // 0 rad = right
-        for(let i=0;i<34;i++){
-          const a = base + rand(-0.55, 0.55);
-          state.sparks.push({
-            a,
-            v: rand(0.9, 2.6),
-            life: rand(42, 88),
-            t: 0,
-            size: rand(1.2, 2.6),
-            hue: rand(190, 320),
-            sat: rand(70, 95),
-            lum: rand(55, 70)
-          });
-        }
-      }
-
-      function step(dt){
-        state.t += dt;
-
-        // subtle continuous sparks
-        if(Math.random() < 0.12){
-          state.sparks.push({
-            a: rand(0, TAU),
-            v: rand(0.6, 1.4),
-            life: rand(55, 120),
-            t: 0,
-            size: rand(1.0, 2.2),
-            hue: rand(185, 330),
-            sat: rand(70, 95),
-            lum: rand(52, 70)
-          });
-        }
-
-        // update sparks
-        state.sparks = state.sparks.filter(s=>{
-          s.t += dt*60;
-          return s.t < s.life;
-        });
-      }
-
-      function metaballPath(cx, cy, R, t){
-  // Soft non-spherical, "metamorphic" outline (Venom-like)
-  const pts = [];
-  const steps = 84;
-  for(let i=0;i<steps;i++){
-    const a = (i/steps) * TAU;
-    const n1 = Math.sin(a*3 + t*0.85);
-    const n2 = Math.sin(a*7 - t*1.15);
-    const n3 = Math.sin(a*11 + t*0.55);
-    const bulge = 0.14*n1 + 0.085*n2 + 0.045*n3;
-    const px = state.pointer.x * 0.09;
-    const py = state.pointer.y * 0.09;
-    const ven = 0.14 * Math.exp(-Math.pow((a - (Math.atan2(py, px)||0) + TAU) % TAU, 2) / (2*Math.pow(0.9,2)));
-    const rr = R * (1 + bulge + ven);
-    pts.push([cx + Math.cos(a)*rr, cy + Math.sin(a)*rr]);
-  }
-  ctx.beginPath();
-  for(let i=0;i<pts.length;i++){
-    const [x,y] = pts[i];
-    if(i===0) ctx.moveTo(x,y);
-    else ctx.lineTo(x,y);
-  }
-  ctx.closePath();
-}
-
-function draw(){
-        const dpr = state.dpr;
-        const w = state.w * dpr;
-        const h = state.h * dpr;
-        ctx.clearRect(0,0,w,h);
-
-        const cx = w/2, cy = h/2;
-        const R = Math.min(w,h) * 0.255;   // slightly smaller "creature"
-        const t = state.t;
-
-        // soft nebula
-        ctx.save();
-        const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R*5.0);
-        bg.addColorStop(0, "rgba(40,100,190,0.10)");
-        bg.addColorStop(0.45, "rgba(120,70,220,0.06)");
-        bg.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.fillStyle = bg;
-        ctx.fillRect(0,0,w,h);
-        ctx.restore();
-
-        const TAU = Math.PI*2;
-
-        // blob path (venom-like)
-        metaballPath(cx, cy, R*1.12, t);
-
-        // --- FILL (energy patch) ---
-        ctx.save();
-        ctx.clip();
-
-        // base "gel" gradient
-        const g0 = ctx.createRadialGradient(cx - R*0.25, cy - R*0.22, R*0.05, cx, cy, R*1.55);
-        g0.addColorStop(0, "rgba(240,250,255,0.80)");
-        g0.addColorStop(0.22, "rgba(120,235,255,0.55)");
-        g0.addColorStop(0.55, "rgba(60,160,255,0.25)");
-        g0.addColorStop(1, "rgba(30,60,120,0.04)");
-        ctx.globalCompositeOperation = "lighter";
-        ctx.fillStyle = g0;
-        ctx.fillRect(cx-R*2, cy-R*2, R*4, R*4);
-
-        // refractive highlight streaks
-        for(let i=0;i<4;i++){
-          const offx = (Math.sin(t*0.7 + i)*0.22 - 0.12) * R;
-          const offy = (Math.cos(t*0.55 + i)*0.18 - 0.08) * R;
-          const gh = ctx.createRadialGradient(cx+offx, cy+offy, R*0.02, cx+offx, cy+offy, R*(0.62 + i*0.08));
-          gh.addColorStop(0, "rgba(255,255,255,0.35)");
-          gh.addColorStop(0.35, "rgba(160,240,255,0.14)");
-          gh.addColorStop(1, "rgba(0,0,0,0)");
-          ctx.globalAlpha = 0.75;
-          ctx.fillStyle = gh;
-          ctx.fillRect(cx-R*2, cy-R*2, R*4, R*4);
-        }
-        ctx.globalAlpha = 1;
-
-        // inner flowing "energy" lines (clipped)
-        ctx.globalCompositeOperation = "screen";
-        ctx.lineWidth = Math.max(1.2, R*0.012);
-        ctx.shadowBlur = R*0.18;
-        ctx.shadowColor = "rgba(90,220,255,0.35)";
-        for(let k=0;k<3;k++){
-          const amp = R*(0.10 + k*0.03);
-          const y0 = cy + (k-1)*R*0.08;
-          ctx.beginPath();
-          for(let x=-R*1.2; x<=R*1.2; x+=R*0.03){
-            const xx = cx + x;
-            const yy = y0 + Math.sin((x/R)*3.2 + t*2.0 + k)*amp*0.18
-                           + Math.sin((x/R)*6.8 - t*1.5 + k)*amp*0.10;
-            if(x===-R*1.2) ctx.moveTo(xx,yy);
-            else ctx.lineTo(xx,yy);
-          }
-          const lg = ctx.createLinearGradient(cx-R,cy, cx+R,cy);
-          lg.addColorStop(0, "rgba(140,90,255,0.00)");
-          lg.addColorStop(0.25, "rgba(90,230,255,0.45)");
-          lg.addColorStop(0.55, "rgba(255,255,255,0.35)");
-          lg.addColorStop(0.85, "rgba(120,90,255,0.20)");
-          lg.addColorStop(1, "rgba(140,90,255,0.00)");
-          ctx.strokeStyle = lg;
-          ctx.stroke();
-        }
-        ctx.shadowBlur = 0;
-
-        // subtle grain
-        ctx.globalCompositeOperation = "overlay";
-        ctx.globalAlpha = 0.10;
-        for(let i=0;i<70;i++){
-          const x = cx + (Math.random()-0.5)*R*2.8;
-          const y = cy + (Math.random()-0.5)*R*2.8;
-          const s = Math.random()*1.8 + 0.4;
-          ctx.fillStyle = "rgba(255,255,255,0.7)";
-          ctx.beginPath(); ctx.arc(x,y,s,0,TAU); ctx.fill();
-        }
-        ctx.globalAlpha = 1;
-        ctx.restore();
-
-        // --- OUTLINE + GLOW (chromatic aberration) ---
-        // big outer glow
-        metaballPath(cx, cy, R*1.12, t);
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.lineWidth = R*0.085;
-        ctx.shadowBlur = R*0.55;
-        ctx.shadowColor = "rgba(50,200,255,0.55)";
-        ctx.strokeStyle = "rgba(90,230,255,0.22)";
-        ctx.stroke();
-        ctx.restore();
-
-        // chromatic fringes (magenta + cyan offsets)
-        function strokeOffset(dx, dy, col, lw, blur, a){
-          ctx.save();
-          ctx.translate(dx, dy);
-          metaballPath(cx, cy, R*1.12, t);
-          ctx.globalCompositeOperation = "screen";
-          ctx.lineWidth = lw;
-          ctx.shadowBlur = blur;
-          ctx.shadowColor = col.replace("rgb","rgba").replace(")", `,${a})`);
-          ctx.strokeStyle = col.replace("rgb","rgba").replace(")", `,${a})`);
-          ctx.stroke();
-          ctx.restore();
-        }
-        strokeOffset(-R*0.018, 0, "rgb(255,90,220)", R*0.030, R*0.28, 0.70);
-        strokeOffset(R*0.018, 0, "rgb(90,240,255)", R*0.030, R*0.28, 0.70);
-        strokeOffset(0, -R*0.012, "rgb(255,255,255)", R*0.018, R*0.20, 0.55);
-
-        // crisp edge
-        metaballPath(cx, cy, R*1.12, t);
-        ctx.save();
-        ctx.globalCompositeOperation = "lighter";
-        ctx.lineWidth = R*0.012;
-        const eg = ctx.createLinearGradient(cx-R, cy-R, cx+R, cy+R);
-        eg.addColorStop(0, "rgba(110,230,255,0.80)");
-        eg.addColorStop(0.45, "rgba(255,255,255,0.75)");
-        eg.addColorStop(1, "rgba(160,110,255,0.45)");
-        ctx.strokeStyle = eg;
-        ctx.stroke();
-        ctx.restore();
-
-        // sparks (kept subtle)
-        if(state.sparks.length){
-          ctx.save();
-          ctx.globalCompositeOperation = "screen";
-          for(const s of state.sparks){
-            const p = s.t / s.life;
-            const rr = R*(1.05 + p*1.2);
-            const x = cx + Math.cos(s.a) * rr;
-            const y = cy + Math.sin(s.a) * rr;
-            const a = (1-p) * 0.85;
-            ctx.fillStyle = `hsla(${s.hue}, ${s.sat}%, ${s.lum}%, ${a})`;
-            ctx.shadowBlur = R*0.20;
-            ctx.shadowColor = `hsla(${s.hue}, ${s.sat}%, ${s.lum}%, ${a})`;
-            ctx.beginPath(); ctx.arc(x,y, s.size*dpr, 0, TAU); ctx.fill();
-          }
-          ctx.restore();
-        }
-      }
-
-let last = performance.now();
-      function loop(now){
-        const dt = Math.min(0.05, (now - last) / 1000);
+        const now = performance.now();
+        const dt = Math.min(0.03, (now - last) / 1000);
         last = now;
-        step(dt);
-        draw();
-        requestAnimationFrame(loop);
+
+        uniforms.uTime.value += dt;
+
+        // Smooth pointer
+        pointer.lerp(targetPointer, 1 - Math.pow(0.001, dt));
+        uniforms.uPointer.value.copy(pointer);
+
+        // alive but not "busy"
+        mesh.rotation.y += dt * 0.22;
+        mesh.rotation.x = Math.sin(uniforms.uTime.value * 0.35) * 0.08;
+
+        renderer.render(scene, camera);
       }
 
-      window.addEventListener('resize', resize, {passive:true});
-      init();
-    })();;
+      // Start
+      if(fallbackImg) fallbackImg.style.display = 'none';
+      canvas.style.display = 'block';
+      raf();
+
+      // Cleanup (optional)
+      window.addEventListener('beforeunload', ()=>{
+        cancelAnimationFrame(rafId);
+        io.disconnect();
+        geo.dispose();
+        mat.dispose();
+        stars.dispose();
+        starMat.dispose();
+        renderer.dispose();
+      });
+    })();
+
+;
 </script>
 </body>
 </html>
