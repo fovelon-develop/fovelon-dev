@@ -263,7 +263,7 @@
 
     .orbWrap{
       position:relative;
-      width:min(360px, 62vw);
+      width:min(320px, 58vw);
       aspect-ratio: 1 / 1;
       transform: translateZ(0);
     }
@@ -693,7 +693,7 @@ body::after {
 
 /* --- Orb v2: living energy creature (canvas) --- */
 body{ overflow-x:hidden; }
-.orbField{ position:relative; width:min(580px, 52vw); aspect-ratio:1/1; margin-inline:auto; }
+.orbField{ position:relative; width:min(460px, 48vw); aspect-ratio:1/1; margin-inline:auto; }
 .orbCanvas{ width:100%; height:100%; display:block; border-radius:999px; }
 .orbOverlay{ position:absolute; inset:0; pointer-events:none; }
 
@@ -702,10 +702,10 @@ body{ overflow-x:hidden; }
 
 .orbMessage{
   position:absolute;
-  left: 56%;
+  left: 100%;
   top: 50%;
-  transform: translate(10%, -50%);
-  max-width: min(320px, 46vw);
+  transform: translate(14%, -50%);
+  max-width: min(340px, 52vw);
   padding: 12px 14px;
   border-radius: 16px;
   background: rgba(18, 26, 42, .42);
@@ -724,6 +724,11 @@ body{ overflow-x:hidden; }
   border-left: 1px solid rgba(180, 220, 255, .18);
   border-bottom: 1px solid rgba(180, 220, 255, .18);
   backdrop-filter: blur(14px);
+}
+
+@media (max-width: 920px){
+  .orbMessage{ left:50%; top: 102%; transform: translate(-50%, 12%); max-width: min(520px, 92vw); }
+  .orbMessage:before{ left:50%; top:-10px; transform: translateX(-50%) rotate(45deg); border-left:0; border-bottom:0; border-right: 1px solid rgba(180, 220, 255, .18); border-top: 1px solid rgba(180, 220, 255, .18); }
 }
 .orbMessageInner{ font-size: 13px; line-height: 1.35; letter-spacing: .2px; }
 .orbMessage.isBurst{ animation: orbMsgIn 620ms cubic-bezier(.2,.9,.2,1) both; }
@@ -1196,10 +1201,10 @@ body{ overflow-x:hidden; }
     const n1 = Math.sin(a*3 + t*0.85);
     const n2 = Math.sin(a*7 - t*1.15);
     const n3 = Math.sin(a*11 + t*0.55);
-    const bulge = 0.075*n1 + 0.042*n2 + 0.02*n3;
-    const px = state.pointer.x * 0.06;
-    const py = state.pointer.y * 0.06;
-    const ven = 0.06 * Math.exp(-Math.pow((a - (Math.atan2(py, px)||0) + TAU) % TAU, 2) / (2*Math.pow(0.9,2)));
+    const bulge = 0.14*n1 + 0.085*n2 + 0.045*n3;
+    const px = state.pointer.x * 0.09;
+    const py = state.pointer.y * 0.09;
+    const ven = 0.14 * Math.exp(-Math.pow((a - (Math.atan2(py, px)||0) + TAU) % TAU, 2) / (2*Math.pow(0.9,2)));
     const rr = R * (1 + bulge + ven);
     pts.push([cx + Math.cos(a)*rr, cy + Math.sin(a)*rr]);
   }
@@ -1219,172 +1224,154 @@ function draw(){
         ctx.clearRect(0,0,w,h);
 
         const cx = w/2, cy = h/2;
-        const R = Math.min(w,h) * 0.30;
+        const R = Math.min(w,h) * 0.255;   // slightly smaller "creature"
         const t = state.t;
 
-        // soft vignette / nebula
+        // soft nebula
         ctx.save();
-        const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R*4.2);
-        bg.addColorStop(0, "rgba(40,90,170,0.10)");
-        bg.addColorStop(0.55, "rgba(120,70,190,0.06)");
+        const bg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R*5.0);
+        bg.addColorStop(0, "rgba(40,100,190,0.10)");
+        bg.addColorStop(0.45, "rgba(120,70,220,0.06)");
         bg.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = bg;
         ctx.fillRect(0,0,w,h);
         ctx.restore();
 
-        // helpers
         const TAU = Math.PI*2;
-        const px = state.pointer.x * 0.22;
-        const py = state.pointer.y * 0.22;
 
-        function drawTorusLayer(opts){
-          const ox = (opts.ox||0)*R;
-          const oy = (opts.oy||0)*R;
-          const lw = (opts.lw||0.055)*R;
-          const alpha = opts.alpha ?? 0.55;
-          const blur = (opts.blur||0.28)*R;
+        // blob path (venom-like)
+        metaballPath(cx, cy, R*1.12, t);
 
-          const a = R*1.18;           // major axis
-          const b = R*0.82;           // minor axis
-          const rot = 0.55 + 0.08*Math.sin(t*0.4);
-
-          // gradient along stroke
-          const g = ctx.createLinearGradient(cx-a, cy-b, cx+a, cy+b);
-          g.addColorStop(0, `rgba(${opts.c1}, ${alpha})`);
-          g.addColorStop(0.45, `rgba(${opts.c2}, ${alpha})`);
-          g.addColorStop(1, `rgba(${opts.c3}, ${alpha})`);
-
-          ctx.save();
-          ctx.translate(cx + ox + px*R*0.55, cy + oy + py*R*0.55);
-          ctx.rotate(rot);
-          ctx.globalCompositeOperation = opts.comp || "lighter";
-          ctx.strokeStyle = g;
-          ctx.lineWidth = lw;
-          ctx.lineCap = "round";
-          ctx.shadowColor = `rgba(${opts.shadow||opts.c2}, ${alpha*0.75})`;
-          ctx.shadowBlur = blur;
-
-          const steps = 260;
-          ctx.beginPath();
-          for(let i=0;i<=steps;i++){
-            const u = (i/steps)*TAU;
-            // metamorphic deformation (soft, organic)
-            const d = 1
-              + 0.055*Math.sin(u*3 + t*0.85)
-              + 0.030*Math.sin(u*7 - t*1.10)
-              + 0.018*Math.sin(u*11 + t*0.55);
-
-            // "refraction wobble" pushes highlights slightly
-            const ref = 0.020*Math.sin(t*1.2 + u*5.0) + 0.010*Math.cos(t*0.8 + u*9.0);
-
-            const x = Math.cos(u) * a * d;
-            const y = Math.sin(u) * b * d;
-
-            // subtle 3D twist (gives that 'energy ring' feel)
-            const twist = 0.10*Math.sin(u*2 - t*0.9);
-            const yy = y + twist*R*0.55;
-
-            const px2 = x * (1 + ref);
-            const py2 = yy * (1 - ref);
-
-            if(i===0) ctx.moveTo(px2, py2);
-            else ctx.lineTo(px2, py2);
-          }
-          ctx.stroke();
-          ctx.restore();
-        }
-
-        // --- Chromatic aberration + refraction (stacked layers) ---
-        // magenta shift
-        drawTorusLayer({
-          ox: -0.020, oy: 0.000, lw: 0.060, alpha: 0.28,
-          c1: "255,120,235", c2: "160,120,255", c3: "90,190,255",
-          shadow: "255,120,235", blur: 0.34, comp: "screen"
-        });
-
-        // cyan shift
-        drawTorusLayer({
-          ox: 0.020, oy: 0.000, lw: 0.060, alpha: 0.26,
-          c1: "80,255,245", c2: "0,210,255", c3: "130,120,255",
-          shadow: "0,210,255", blur: 0.34, comp: "screen"
-        });
-
-        // main neon body
-        drawTorusLayer({
-          ox: 0.0, oy: 0.0, lw: 0.070, alpha: 0.60,
-          c1: "210,245,255", c2: "0,190,255", c3: "160,120,255",
-          shadow: "0,190,255", blur: 0.40, comp: "lighter"
-        });
-
-        // inner glass highlight (thin, crisp)
+        // --- FILL (energy patch) ---
         ctx.save();
-        ctx.globalCompositeOperation = "screen";
-        ctx.globalAlpha = 0.35;
-        ctx.lineWidth = Math.max(1, R*0.020);
-        ctx.shadowColor = "rgba(220,245,255,0.35)";
-        ctx.shadowBlur = R*0.22;
-        const hl = ctx.createRadialGradient(cx - R*0.35, cy - R*0.25, R*0.05, cx, cy, R*1.25);
-        hl.addColorStop(0, "rgba(255,255,255,0.55)");
-        hl.addColorStop(0.35, "rgba(120,210,255,0.22)");
-        hl.addColorStop(0.75, "rgba(255,120,235,0.10)");
-        hl.addColorStop(1, "rgba(0,0,0,0)");
-        ctx.strokeStyle = hl;
-        ctx.beginPath();
-        const a = R*1.02, b = R*0.70, rot = 0.55;
-        for(let i=0;i<=220;i++){
-          const u = (i/220)*TAU;
-          const d = 1 + 0.020*Math.sin(u*4 + t*0.8);
-          const x = cx + Math.cos(u)*a*d;
-          const y = cy + Math.sin(u)*b*d + 0.07*R*Math.sin(u*2 - t*0.9);
-          if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-        }
-        ctx.stroke();
-        ctx.restore();
+        ctx.clip();
 
-        // filaments across the torus (subtle energy strands)
-        ctx.save();
+        // base "gel" gradient
+        const g0 = ctx.createRadialGradient(cx - R*0.25, cy - R*0.22, R*0.05, cx, cy, R*1.55);
+        g0.addColorStop(0, "rgba(240,250,255,0.80)");
+        g0.addColorStop(0.22, "rgba(120,235,255,0.55)");
+        g0.addColorStop(0.55, "rgba(60,160,255,0.25)");
+        g0.addColorStop(1, "rgba(30,60,120,0.04)");
         ctx.globalCompositeOperation = "lighter";
-        ctx.globalAlpha = 0.22;
-        ctx.lineWidth = Math.max(1, R*0.012);
+        ctx.fillStyle = g0;
+        ctx.fillRect(cx-R*2, cy-R*2, R*4, R*4);
+
+        // refractive highlight streaks
+        for(let i=0;i<4;i++){
+          const offx = (Math.sin(t*0.7 + i)*0.22 - 0.12) * R;
+          const offy = (Math.cos(t*0.55 + i)*0.18 - 0.08) * R;
+          const gh = ctx.createRadialGradient(cx+offx, cy+offy, R*0.02, cx+offx, cy+offy, R*(0.62 + i*0.08));
+          gh.addColorStop(0, "rgba(255,255,255,0.35)");
+          gh.addColorStop(0.35, "rgba(160,240,255,0.14)");
+          gh.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.globalAlpha = 0.75;
+          ctx.fillStyle = gh;
+          ctx.fillRect(cx-R*2, cy-R*2, R*4, R*4);
+        }
+        ctx.globalAlpha = 1;
+
+        // inner flowing "energy" lines (clipped)
+        ctx.globalCompositeOperation = "screen";
+        ctx.lineWidth = Math.max(1.2, R*0.012);
         ctx.shadowBlur = R*0.18;
-        ctx.shadowColor = "rgba(0,210,255,0.35)";
-        for(let k=0;k<4;k++){
-          const phase = t*0.9 + k*1.3;
-          const amp = R*(0.10 + 0.02*k);
+        ctx.shadowColor = "rgba(90,220,255,0.35)";
+        for(let k=0;k<3;k++){
+          const amp = R*(0.10 + k*0.03);
+          const y0 = cy + (k-1)*R*0.08;
           ctx.beginPath();
-          for(let i=0;i<=180;i++){
-            const u = i/180;
-            const x = cx + (u-0.5)*R*2.1;
-            const y = cy + Math.sin(u*TAU*1.3 + phase)*amp*0.35 + Math.cos(u*TAU*2.2 - phase)*amp*0.18;
-            if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+          for(let x=-R*1.2; x<=R*1.2; x+=R*0.03){
+            const xx = cx + x;
+            const yy = y0 + Math.sin((x/R)*3.2 + t*2.0 + k)*amp*0.18
+                           + Math.sin((x/R)*6.8 - t*1.5 + k)*amp*0.10;
+            if(x===-R*1.2) ctx.moveTo(xx,yy);
+            else ctx.lineTo(xx,yy);
           }
-          const g = ctx.createLinearGradient(cx-R, cy, cx+R, cy);
-          g.addColorStop(0, "rgba(0,0,0,0)");
-          g.addColorStop(0.25, "rgba(0,210,255,0.55)");
-          g.addColorStop(0.55, "rgba(210,245,255,0.65)");
-          g.addColorStop(0.80, "rgba(160,120,255,0.45)");
-          g.addColorStop(1, "rgba(0,0,0,0)");
-          ctx.strokeStyle = g;
+          const lg = ctx.createLinearGradient(cx-R,cy, cx+R,cy);
+          lg.addColorStop(0, "rgba(140,90,255,0.00)");
+          lg.addColorStop(0.25, "rgba(90,230,255,0.45)");
+          lg.addColorStop(0.55, "rgba(255,255,255,0.35)");
+          lg.addColorStop(0.85, "rgba(120,90,255,0.20)");
+          lg.addColorStop(1, "rgba(140,90,255,0.00)");
+          ctx.strokeStyle = lg;
           ctx.stroke();
         }
-        ctx.restore();
+        ctx.shadowBlur = 0;
 
-        // tiny stars
-        ctx.save();
-        ctx.globalCompositeOperation = "screen";
+        // subtle grain
+        ctx.globalCompositeOperation = "overlay";
         ctx.globalAlpha = 0.10;
-        for(let i=0;i<60;i++){
-          const x = cx + (Math.random()-0.5)*R*5.0;
-          const y = cy + (Math.random()-0.5)*R*5.0;
+        for(let i=0;i<70;i++){
+          const x = cx + (Math.random()-0.5)*R*2.8;
+          const y = cy + (Math.random()-0.5)*R*2.8;
           const s = Math.random()*1.8 + 0.4;
           ctx.fillStyle = "rgba(255,255,255,0.7)";
           ctx.beginPath(); ctx.arc(x,y,s,0,TAU); ctx.fill();
         }
+        ctx.globalAlpha = 1;
         ctx.restore();
+
+        // --- OUTLINE + GLOW (chromatic aberration) ---
+        // big outer glow
+        metaballPath(cx, cy, R*1.12, t);
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.lineWidth = R*0.085;
+        ctx.shadowBlur = R*0.55;
+        ctx.shadowColor = "rgba(50,200,255,0.55)";
+        ctx.strokeStyle = "rgba(90,230,255,0.22)";
+        ctx.stroke();
+        ctx.restore();
+
+        // chromatic fringes (magenta + cyan offsets)
+        function strokeOffset(dx, dy, col, lw, blur, a){
+          ctx.save();
+          ctx.translate(dx, dy);
+          metaballPath(cx, cy, R*1.12, t);
+          ctx.globalCompositeOperation = "screen";
+          ctx.lineWidth = lw;
+          ctx.shadowBlur = blur;
+          ctx.shadowColor = col.replace("rgb","rgba").replace(")", `,${a})`);
+          ctx.strokeStyle = col.replace("rgb","rgba").replace(")", `,${a})`);
+          ctx.stroke();
+          ctx.restore();
+        }
+        strokeOffset(-R*0.018, 0, "rgb(255,90,220)", R*0.030, R*0.28, 0.70);
+        strokeOffset(R*0.018, 0, "rgb(90,240,255)", R*0.030, R*0.28, 0.70);
+        strokeOffset(0, -R*0.012, "rgb(255,255,255)", R*0.018, R*0.20, 0.55);
+
+        // crisp edge
+        metaballPath(cx, cy, R*1.12, t);
+        ctx.save();
+        ctx.globalCompositeOperation = "lighter";
+        ctx.lineWidth = R*0.012;
+        const eg = ctx.createLinearGradient(cx-R, cy-R, cx+R, cy+R);
+        eg.addColorStop(0, "rgba(110,230,255,0.80)");
+        eg.addColorStop(0.45, "rgba(255,255,255,0.75)");
+        eg.addColorStop(1, "rgba(160,110,255,0.45)");
+        ctx.strokeStyle = eg;
+        ctx.stroke();
+        ctx.restore();
+
+        // sparks (kept subtle)
+        if(state.sparks.length){
+          ctx.save();
+          ctx.globalCompositeOperation = "screen";
+          for(const s of state.sparks){
+            const p = s.t / s.life;
+            const rr = R*(1.05 + p*1.2);
+            const x = cx + Math.cos(s.a) * rr;
+            const y = cy + Math.sin(s.a) * rr;
+            const a = (1-p) * 0.85;
+            ctx.fillStyle = `hsla(${s.hue}, ${s.sat}%, ${s.lum}%, ${a})`;
+            ctx.shadowBlur = R*0.20;
+            ctx.shadowColor = `hsla(${s.hue}, ${s.sat}%, ${s.lum}%, ${a})`;
+            ctx.beginPath(); ctx.arc(x,y, s.size*dpr, 0, TAU); ctx.fill();
+          }
+          ctx.restore();
+        }
       }
 
-
-      let last = performance.now();
+let last = performance.now();
       function loop(now){
         const dt = Math.min(0.05, (now - last) / 1000);
         last = now;
