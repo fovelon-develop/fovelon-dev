@@ -254,9 +254,9 @@
     }
 
     .orbCanvas{
-      position:absolute; inset:-40px;
-      width:calc(100% + 80px);
-      height:calc(100% + 80px);
+      position:absolute; inset:-18px;
+      width:calc(100% + 36px);
+      height:calc(100% + 36px);
       filter: blur(0px);
       opacity:1;
     }
@@ -325,8 +325,8 @@
       position:absolute; inset:-30%;
       border-radius:50%;
       background:
-        radial-gradient(circle at 50% 50%, rgba(0,220,255,.26), rgba(0,0,0,0) 62%),
-        radial-gradient(circle at 50% 50%, rgba(120,90,255,.18), rgba(0,0,0,0) 70%);
+        radial-gradient(circle at 50% 50%, rgba(0,220,255,.26), rgba(0,0,0,0) 62%);
+      
       filter: blur(26px);
       opacity:.75;
       animation: haloBreath 4.8s ease-in-out infinite;
@@ -706,43 +706,11 @@ body::after {
 body{ overflow-x:hidden; }
 .orbField{ position:relative; width:min(460px, 48vw); aspect-ratio:1/1; margin-inline:auto; }
 .orbCanvas{ width:100%; height:100%; display:block; border-radius:999px; }
-.orbOverlay{ position:absolute; inset:0; pointer-events:none; }
-
 50%{ transform: translateZ(0) scale(1.06); opacity:.95; }
 }
 
-.orbMessage{
-  position:absolute;
-  left: 100%;
-  top: 50%;
-  transform: translate(14%, -50%);
-  max-width: min(340px, 52vw);
-  padding: 12px 14px;
-  border-radius: 16px;
-  background: rgba(18, 26, 42, .42);
-  border: 1px solid rgba(180, 220, 255, .18);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 18px 50px rgba(0,0,0,.35), 0 0 0 1px rgba(0,0,0,.22) inset;
-  color: rgba(235,245,255,.92);
-}
-.orbMessage:before{
-  content:"";
-  position:absolute;
-  left:-10px; top:50%;
-  width:18px; height:18px;
-  transform: translateY(-50%) rotate(45deg);
-  background: rgba(18, 26, 42, .42);
-  border-left: 1px solid rgba(180, 220, 255, .18);
-  border-bottom: 1px solid rgba(180, 220, 255, .18);
-  backdrop-filter: blur(14px);
-}
-
 @media (max-width: 920px){
-  .orbMessage{ left:50%; top: 102%; transform: translate(-50%, 12%); max-width: min(520px, 92vw); }
-  .orbMessage:before{ left:50%; top:-10px; transform: translateX(-50%) rotate(45deg); border-left:0; border-bottom:0; border-right: 1px solid rgba(180, 220, 255, .18); border-top: 1px solid rgba(180, 220, 255, .18); }
-}
-.orbMessageInner{ font-size: 13px; line-height: 1.35; letter-spacing: .2px; }
-.orbMessage.isBurst{ animation: orbMsgIn 620ms cubic-bezier(.2,.9,.2,1) both; }
+  }
 @keyframes orbMsgIn{
   from{ opacity:0; transform: translate(16%, -50%) scale(.96); filter: blur(6px); }
   to{ opacity:1; transform: translate(10%, -50%) scale(1); filter: blur(0); }
@@ -754,9 +722,7 @@ body{ overflow-x:hidden; }
 @media (max-width: 980px){
   .orbField{ width:min(520px, 86vw); }
   .capGrid{ grid-template-columns: 1fr; max-width: 100%; }
-  .orbMessage{ left:50%; top: 86%; transform: translate(-50%,-50%); text-align:center; }
-  .orbMessage:before{ display:none; }
-}
+  }
 
 </style>
 </head>
@@ -813,11 +779,8 @@ body{ overflow-x:hidden; }
             <canvas id="orbCanvas" class="orbCanvas"></canvas>
             <img id="orbFallback" class="orbFallback" src="assets/blob.png" alt="Fovelon entity" />
 
-            <div class="orbOverlay">
-<div class="orbMessage" id="orbMessage" aria-live="polite">
-                <div class="orbMessageInner" id="orbMessageInner">Multi-language out of the box — speak your customer’s language.</div>
-              </div>
-            </div>
+          </div>
+</div>
           </div>
 </div>
 </div>
@@ -841,9 +804,7 @@ body{ overflow-x:hidden; }
         </div>
         
         <div class="pillRow pillRow--center reveal">
-          <div class="pill"><span class="ok">✓</span> 24/7 instant replies</div>
-          <div class="pill"><span class="ok">✓</span> Multi-language out of the box</div>
-          <div class="pill"><span class="ok">✓</span> All conversations land in one inbox</div>
+<div class="pill"><span class="ok">✓</span> All conversations land in one inbox</div>
         </div>
 <div class="cardGrid">
           <div class="card reveal">
@@ -1127,8 +1088,8 @@ body{ overflow-x:hidden; }
 
       const scene = new THREE.Scene();
 
-      const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 50);
-      camera.position.set(0, 0, 3.6);
+      const camera = new THREE.PerspectiveCamera(28, 1, 0.1, 60);
+      camera.position.set(0, 0, 4.25);
 
       const pointer = new THREE.Vector2(0,0);
       let targetPointer = new THREE.Vector2(0,0);
@@ -1145,6 +1106,7 @@ body{ overflow-x:hidden; }
         varying vec3 vViewDir;
         uniform float uTime;
         uniform vec2 uPointer;
+        uniform float uLowEnd;
 
         // Classic simplex noise (short, shader-friendly)
         vec3 mod289(vec3 x){ return x - floor(x * (1.0 / 289.0)) * 289.0; }
@@ -1214,26 +1176,44 @@ body{ overflow-x:hidden; }
 
         void main(){
           vec3 pos = position;
-          vec3 nrm = normal;
 
-          // "oil/venom" thick deformation: compact + aggressive
-          float t = uTime;
-          float n1 = snoise(pos*1.55 + vec3(0.0, 0.0, t*0.35));
-          float n2 = snoise(pos*2.85 + vec3(t*0.18, -t*0.22, t*0.15));
-          float n3 = snoise(pos*4.20 + vec3(-t*0.12, t*0.10, -t*0.16));
+// --- Otherworldly venom-like blob deformation (thick, compact, 3D) ---
+float t = uTime * 0.65;
 
-          float bulge = 0.12*n1 + 0.07*n2 + 0.035*n3;
+// base point
+vec3 p = pos;
 
-          // pointer "threat" pull: slightly elongates toward cursor
-          vec3 pull = normalize(vec3(uPointer.xy, 0.35));
-          float aim = clamp(dot(nrm, pull), -1.0, 1.0);
-          float threat = pow(max(0.0, aim), 2.2) * 0.10;
+// moving attractors (metaball-ish)
+vec3 c1 = vec3( 0.34*sin(t*0.95),  0.22*cos(t*0.70),  0.18*sin(t*0.55));
+vec3 c2 = vec3(-0.28*cos(t*0.80),  0.26*sin(t*0.85), -0.24*cos(t*0.50));
+vec3 c3 = vec3( 0.10*sin(t*0.40), -0.30*sin(t*0.62),  0.16*cos(t*0.82));
 
-          float disp = bulge + threat;
-          pos += nrm * disp;
+float f1 = exp(-3.2 * length(p - c1));
+float f2 = exp(-3.2 * length(p - c2));
+float f3 = exp(-3.2 * length(p - c3));
+float field = f1 + f2 + f3;
 
-          vec4 world = modelMatrix * vec4(pos, 1.0);
-          vPos = world.xyz;
+// multi-scale noise for organic tension
+float nL = snoise(p*0.75 + vec3(t*0.18, t*0.12, 0.0)); // low
+float nM = snoise(p*1.55 + vec3(0.0, t*0.22, t*0.15)); // mid
+float nH = snoise(p*2.95 + vec3(t*0.28, 0.0, t*0.20)); // high
+
+// compact + thick: mostly swelling, little stretching
+float amp = mix(0.22, 0.14, uLowEnd);
+float swell = (field*0.72) + (nL*0.20) + (nM*0.14) + (nH*0.06);
+
+// tension (slight inward pull gives "oil droplet" weight)
+vec3 pull = normalize((p - c1))*f1 + normalize((p - c2))*f2 + normalize((p - c3))*f3;
+
+pos += normal * (swell * amp);
+pos -= pull * (0.05 * field);
+
+// subtle breathing / aggression (not chaotic)
+pos += normal * (0.02 * sin(t*1.2 + p.y*3.0));
+
+// pointer influence (minimal, just a hint of sentience)
+float pm = smoothstep(1.6, 0.0, length(uPointer));
+pos += normal * (pm * 0.02) * sin(t + p.x*4.0);vPos = world.xyz;
 
           vec3 nWorld = normalize(mat3(modelMatrix) * nrm);
           vNormal = nWorld;
@@ -1276,21 +1256,21 @@ body{ overflow-x:hidden; }
 
           // Deep body (inky blue oil), with inner core pressure
           float r = length(vPos);
-          float core = exp(-r*2.6);                 // bright center
+          float core = exp(-r*2.2);                 // bright center
           float pulse = 0.55 + 0.45*sin(uTime*0.9);
           vec3 coreCol = vec3(0.40, 0.92, 1.0) * core * pulse;
 
-          vec3 body = vec3(0.01, 0.07, 0.14);
-          vec3 mid = vec3(0.03, 0.22, 0.45);
+          vec3 body = vec3(0.005, 0.035, 0.08);
+          vec3 mid = vec3(0.02, 0.18, 0.42);
 
           vec3 col = mix(body, mid, diff);
-          col += coreCol * 1.2;
+          col += coreCol * 1.55;
           col += edge * 1.55;
           col += spec * vec3(0.85, 0.95, 1.0);
 
           // Slight chromatic aberration illusion near edges (no outer ring)
-          col.r += fres * 0.06;
-          col.b += fres * 0.10;
+          col.r += fres * 0.045;
+          col.b += fres * 0.085;
 
           float alpha = sat(0.80 + fres*0.35 + core*0.25);
           gl_FragColor = vec4(col, alpha);
@@ -1298,8 +1278,8 @@ body{ overflow-x:hidden; }
       `;
 
       // Geometry detail depends on device (performance-friendly mobile)
-      const detail = lowEnd ? 5 : 6;
-      const geo = new THREE.IcosahedronGeometry(1.0, detail);
+      const detail = lowEnd ? 4 : 6;
+      const geo = new THREE.IcosahedronGeometry(1.03, detail);
       const mat = new THREE.ShaderMaterial({
         uniforms,
         vertexShader: vert,
@@ -1309,6 +1289,7 @@ body{ overflow-x:hidden; }
       });
 
       const mesh = new THREE.Mesh(geo, mat);
+      mesh.scale.set(0.74, 0.74, 0.74);
       scene.add(mesh);
 
       // Subtle background particles (very cheap)
