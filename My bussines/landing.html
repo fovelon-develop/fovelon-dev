@@ -351,7 +351,7 @@
       backdrop-filter: blur(14px);
       -webkit-backdrop-filter: blur(14px);
       display:flex; gap:10px; align-items:flex-start;
-      animation: bubbleOut 2.8s ease forwards;
+      animation: bubbleOut 4.4s ease forwards;
       transform-origin: 0% 50%;
     }
     .orbBubble .dot{
@@ -613,7 +613,7 @@
 /* iOS safe areas */
 html,body{background-color:var(--bg0); overscroll-behavior-y:none;}
 .safeTop{height: env(safe-area-inset-top); min-height: env(safe-area-inset-top); background: var(--bg0);}
-.safeBot{height: env(safe-area-inset-bottom); min-height: env(safe-area-inset-bottom); background: var(--bg1);}
+.safeBot{height: env(safe-area-inset-bottom); min-height: env(safe-area-inset-bottom); background: var(--bg0);}
 
 @media (max-width: 820px){
   html{scroll-snap-type:none;}
@@ -747,6 +747,18 @@ html,body{background-color:var(--bg0); overscroll-behavior-y:none;}
 <div class="cardTitle">Inbox workflow</div>
 <div class="cardText">Search, filters, tags, and quick replies can be layered in next — without scaring non‑technical owners.</div>
 </div>
+<div class="card reveal">
+<div class="cardTitle">AI autopilot</div>
+<div class="cardText">Auto‑reply + intent routing + escalation rules. Start simple, then turn on automation per page or per product.</div>
+</div>
+<div class="card reveal">
+<div class="cardTitle">Payments & plans</div>
+<div class="cardText">Sell subscriptions with usage tiers, trial flows, invoices, and upgrade prompts — the boring stuff done right.</div>
+</div>
+<div class="card reveal">
+<div class="cardTitle">Team & permissions</div>
+<div class="cardText">Add agents, roles, and private notes. Handoff conversations smoothly without losing context.</div>
+</div>
 </div>
 </div>
 </section>
@@ -765,6 +777,21 @@ html,body{background-color:var(--bg0); overscroll-behavior-y:none;}
 <div style="margin-top:14px; color: rgba(255,255,255,.65); font-size:14px; line-height:1.6;">
             The demo is hosted on this domain for speed. Later we’ll generate an embed snippet tailored to your website.
           </div>
+</div>
+
+<div class="cardGrid" style="margin-top:16px">
+  <div class="card reveal">
+    <div class="cardTitle">What you get in the widget</div>
+    <div class="cardText">Beautiful glass UI, fast replies, and a “device‑like” feel (inspired by iOS).</div>
+  </div>
+  <div class="card reveal">
+    <div class="cardTitle">Lead capture</div>
+    <div class="cardText">Collect name/email automatically when needed — without annoying popups.</div>
+  </div>
+  <div class="card reveal">
+    <div class="cardTitle">Smart prompts</div>
+    <div class="cardText">Rotate short product tips and FAQs inside the hero blob + widget to keep attention.</div>
+  </div>
 </div>
 </div>
 </section>
@@ -1000,27 +1027,48 @@ document.querySelectorAll('#mobileMenu [data-jump]').forEach(a=>{
 // ===== Gentle snap assist (desktop) =====
 let scrollSnapT;
 let lastY = window.scrollY;
-let lastT = performance.now();
+let lastTime = performance.now();
+let lastDir = 0;
+
 function nearestPanel(){
   let best = null;
   let bestDist = 1e9;
   for(const sec of panels){
     const r = sec.getBoundingClientRect();
-    const d = Math.abs(r.top);
+    const d = Math.abs(r.top - 6);
     if(d < bestDist){ bestDist = d; best = sec; }
   }
   return {sec: best, dist: bestDist};
 }
+
+function nearBottom(){
+  const y = window.scrollY;
+  const h = window.innerHeight;
+  const max = document.documentElement.scrollHeight || document.body.scrollHeight;
+  return (y + h) > (max - 260);
+}
+
 window.addEventListener('scroll', ()=>{
   if(window.matchMedia('(max-width: 820px)').matches) return; // don't fight mobile
+  const y = window.scrollY;
+  const now = performance.now();
+  const dy = y - lastY;
+  const dt = Math.max(16, now - lastTime);
+  const vel = dy / dt;
+  lastDir = dy > 0 ? 1 : (dy < 0 ? -1 : lastDir);
+  lastY = y;
+  lastTime = now;
+
   clearTimeout(scrollSnapT);
   scrollSnapT = setTimeout(()=>{
+    if(nearBottom()) return; // allow reaching footer / end of page
     const {sec, dist} = nearestPanel();
-    // if we're close enough to a section edge, snap
-    if(sec && dist < 140){
+    if(!sec) return;
+    const slow = Math.abs(vel) < 0.22;
+    if((dist < 110) || (slow && dist < 170)){
       sec.scrollIntoView({behavior:'smooth', block:'start'});
     }
-  }, 120);
+  }, 140);
 }, {passive:true});
 
 // ===== Living blob: mouse + scroll reaction + auto bubbles =====
