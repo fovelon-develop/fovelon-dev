@@ -64,7 +64,7 @@
       background: radial-gradient(700px 260px at 50% 0%, rgba(77,243,255,.10), transparent 60%);
       pointer-events:none;
     }
-    .panel-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 14px; border-bottom:1px solid rgba(255,255,255,.08)}
+    .panel-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:14px 14px; border-bottom:1px solid rgba(255,255,255,.08); background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,0)); backdrop-filter: blur(18px) saturate(1.7); -webkit-backdrop-filter: blur(18px) saturate(1.7);}
     .panel-head h2{margin:0; font-size:14px; letter-spacing:.2px}
     .panel-head small{color:var(--muted2)}
     .search{padding:10px 12px}
@@ -182,8 +182,8 @@
 
 
 
-html{background:#060A14; color-scheme:dark; overscroll-behavior-y:none; -webkit-text-size-adjust:100%;}
-body{background: radial-gradient(1100px 720px at 50% -140px, rgba(105,132,255,.30), transparent 60%), radial-gradient(900px 620px at 12% 38%, rgba(46,200,255,.24), transparent 62%), radial-gradient(860px 640px at 88% 58%, rgba(168,122,255,.20), transparent 66%), linear-gradient(180deg,#060A14,#08162C 55%,#060A14); background-attachment: fixed; overflow-x:hidden;}
+html{background:#03040C; color-scheme:dark; overscroll-behavior-y:none; -webkit-text-size-adjust:100%;}
+body{background: radial-gradient(1100px 720px at 50% -140px, rgba(105,132,255,.30), transparent 60%), radial-gradient(900px 620px at 12% 38%, rgba(46,200,255,.24), transparent 62%), radial-gradient(860px 640px at 88% 58%, rgba(168,122,255,.20), transparent 66%), linear-gradient(180deg,#03040C,#050E1D 55%,#03040C); background-attachment: fixed; overflow-x:hidden;}
 
 input, textarea, select{font-size:16px;}
 
@@ -207,8 +207,8 @@ input, textarea, select{font-size:16px;}
   opacity:.45; transform: translate3d(62%, 44%, 0); animation: float2 16s ease-in-out infinite;}
 @keyframes float1{50%{transform: translate3d(6%, 6%, 0) scale(1.04)}}
 @keyframes float2{50%{transform: translate3d(56%, 38%, 0) scale(1.03)}}
-.safeTop{height: env(safe-area-inset-top);}
-.safeBot{height: env(safe-area-inset-bottom);}</style>
+.safeTop{height: env(safe-area-inset-top); background:#03040C;}
+.safeBot{height: env(safe-area-inset-bottom); background:#050E1D;}</style>
 </head>
 <body>
 <div aria-hidden="true" class="lightSpots"></div>

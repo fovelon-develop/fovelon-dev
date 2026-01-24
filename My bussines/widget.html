@@ -247,8 +247,8 @@
 
 
 
-html{background:#060A14; color-scheme:dark; overscroll-behavior-y:none; -webkit-text-size-adjust:100%;}
-body{background: radial-gradient(1100px 720px at 50% -140px, rgba(105,132,255,.30), transparent 60%), radial-gradient(900px 620px at 12% 38%, rgba(46,200,255,.24), transparent 62%), radial-gradient(860px 640px at 88% 58%, rgba(168,122,255,.20), transparent 66%), linear-gradient(180deg,#060A14,#08162C 55%,#060A14); background-attachment: fixed; overflow-x:hidden;}
+html{background:#03040C; color-scheme:dark; overscroll-behavior-y:none; -webkit-text-size-adjust:100%;}
+body{background: radial-gradient(1100px 720px at 50% -140px, rgba(105,132,255,.30), transparent 60%), radial-gradient(900px 620px at 12% 38%, rgba(46,200,255,.24), transparent 62%), radial-gradient(860px 640px at 88% 58%, rgba(168,122,255,.20), transparent 66%), linear-gradient(180deg,#03040C,#050E1D 55%,#03040C); background-attachment: fixed; overflow-x:hidden;}
 
 input, textarea, select{font-size:16px;}
 
@@ -272,15 +272,15 @@ input, textarea, select{font-size:16px;}
   opacity:.45; transform: translate3d(62%, 44%, 0); animation: float2 16s ease-in-out infinite;}
 @keyframes float1{50%{transform: translate3d(6%, 6%, 0) scale(1.04)}}
 @keyframes float2{50%{transform: translate3d(56%, 38%, 0) scale(1.03)}}
-.safeTop{height: env(safe-area-inset-top);}
-.safeBot{height: env(safe-area-inset-bottom);}
+.safeTop{height: env(safe-area-inset-top); background:#03040C;}
+.safeBot{height: env(safe-area-inset-bottom); background:#050E1D;}
 
 /* ====== OVERRIDES: mobile-fit widget layout (v21) ====== */
 .panel{
   display:flex;
   flex-direction:column;
-  width: min(420px, 94vw) !important;
-  max-width: 420px !important;
+  width: min(380px, 92vw) !important;
+  max-width: 380px !important;
 }
 .stream{
   flex:1 1 auto;
@@ -288,7 +288,7 @@ input, textarea, select{font-size:16px;}
   height:auto !important;
   overflow-y:auto;
   -webkit-overflow-scrolling: touch;
-  padding: 14px 14px 8px;
+  padding: 14px 14px 78px;
 }
 .composer{
   flex:0 0 auto;
@@ -310,6 +310,9 @@ input, textarea, select{font-size:16px;}
     height: calc(100dvh - 110px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   }
   .panel-head{padding:12px 12px;}
+  .meta{display:none;}
+  .brand .t1{font-size:14px;}
+  .brand .t2{font-size:12px;}
   .msg{font-size:13px; padding: 10px 10px; border-radius: 14px;}
   .composer{padding: 10px;}
   .sendBtn{width:44px; height:44px; border-radius: 14px;}
