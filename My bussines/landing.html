@@ -1028,6 +1028,38 @@ document.querySelectorAll('#mobileMenu [data-jump]').forEach(a=>{
 // ===== Desktop wheel/pad paging (one section at a time) =====
 let scrollSnapT;
 let isPaging = false;
+let lastWheelAt = 0;
+
+function isInteractiveTarget(el){
+  if(!el) return false;
+  return !!el.closest('input, textarea, select, button, a, [contenteditable="true"], [role="textbox"], .noPaging');
+}
+
+function hasScrollableAncestor(el){
+  // If the wheel event is happening over a scrollable container (cards, carousels, code blocks),
+  // don't hijack it with section paging.
+  let cur = el;
+  while(cur && cur !== document.body){
+    const cs = getComputedStyle(cur);
+    const oy = cs.overflowY;
+    const isScrollY = (oy === 'auto' || oy === 'scroll');
+    if(isScrollY && cur.scrollHeight > cur.clientHeight + 2) return true;
+    cur = cur.parentElement;
+  }
+  return false;
+}
+
+function nearBottom(px=140){
+  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  const winH = window.innerHeight || document.documentElement.clientHeight || 0;
+  const docH = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+  return (scrollTop + winH) >= (docH - px);
+}
+
+function nearTop(px=10){
+  const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
+  return scrollTop <= px;
+}
 function panelIndexFromViewport(){
   // pick the panel whose top is closest to the top of viewport
   let bestI = 0, bestD = 1e9;
@@ -1050,11 +1082,17 @@ function goToPanel(i){
 
 window.addEventListener('wheel', (e)=>{
   if(window.matchMedia('(max-width: 820px)').matches) return;
+  if(document.documentElement.classList.contains('menuOpen')) return;
+  if(isInteractiveTarget(e.target) || hasScrollableAncestor(e.target)) return;
   if(isPaging) { e.preventDefault(); return; }
   if(e.ctrlKey) return; // allow browser zoom
-  if(nearBottom()) return; // let user reach footer
+  if(nearBottom() && e.deltaY > 0) return; // let user reach footer
+  if(nearTop() && e.deltaY < 0) return; // allow browser bounce/top
   const dy = e.deltaY;
   if(Math.abs(dy) < 4) return; // ignore micro jitter
+  const now = performance.now();
+  if(now - lastWheelAt < 520) { e.preventDefault(); return; }
+  lastWheelAt = now;
   e.preventDefault();
   const dir = dy > 0 ? 1 : -1;
   const idx = panelIndexFromViewport();
@@ -1094,6 +1132,19 @@ function getAccentRGB(){
   return [46,200,255];
 }
 
+// Smooth color transitions between section accents
+let curRGB = getAccentRGB();
+function lerp(a,b,t){ return a + (b-a)*t; }
+function stepAccent(){
+  const [tr,tg,tb] = getAccentRGB();
+  curRGB = [
+    lerp(curRGB[0], tr, 0.08),
+    lerp(curRGB[1], tg, 0.08),
+    lerp(curRGB[2], tb, 0.08)
+  ];
+  return curRGB;
+}
+
 let ctx, dpr=1;
 function resizeBlob(){
   if(!canvas) return;
@@ -1112,10 +1163,13 @@ function drawBlob(t){
   const W = canvas.width, H = canvas.height;
   ctx.clearRect(0,0,W,H);
 
-  const [r,g,b] = getAccentRGB();
-  const cx = W/2, cy = H/2;
-  const base = Math.min(W,H) * 0.28;
-  const pts = 220;
+  const [r,g,b] = stepAccent();
+  // subtle drift so the blob feels "alive" even when the user doesn't scroll
+  const driftX = Math.sin(t*0.00035) * W*0.012;
+  const driftY = Math.cos(t*0.00028) * H*0.010;
+  const cx = W/2 + driftX, cy = H/2 + driftY;
+  const base = Math.min(W,H) * 0.285;
+  const pts = 260;
 
   // gradient that shifts with accent (smart per section)
   const grad = ctx.createRadialGradient(cx - base*0.25, cy - base*0.25, base*0.2, cx, cy, base*2.1);
@@ -1125,12 +1179,18 @@ function drawBlob(t){
   grad.addColorStop(1, `rgba(0,0,0,0)`);
 
   ctx.beginPath();
+  // time-varying amplitudes (feels like organic "breathing")
+  const a1 = 0.060 + 0.010*Math.sin(t*0.00055);
+  const a2 = 0.038 + 0.010*Math.cos(t*0.00042);
+  const a3 = 0.022 + 0.008*Math.sin(t*0.00033);
+  const a4 = 0.012 + 0.006*Math.cos(t*0.00027);
   for(let i=0;i<=pts;i++){
     const a = (i/pts) * Math.PI*2;
     const n1 = Math.sin(a*3.0 + t*0.0016);
-    const n2 = Math.sin(a*6.0 - t*0.0011);
-    const n3 = Math.sin(a*9.0 + t*0.0009);
-    const wobble = (n1*0.055) + (n2*0.035) + (n3*0.02);
+    const n2 = Math.sin(a*6.0 - t*0.0011 + 1.7);
+    const n3 = Math.sin(a*9.0 + t*0.0009 - 0.8);
+    const n4 = Math.sin(a*12.0 - t*0.0007 + 2.4);
+    const wobble = (n1*a1) + (n2*a2) + (n3*a3) + (n4*a4);
     const rr = base * (1.0 + wobble);
     const x = cx + Math.cos(a) * rr;
     const y = cy + Math.sin(a) * rr;
