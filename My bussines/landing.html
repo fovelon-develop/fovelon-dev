@@ -47,8 +47,8 @@
       overflow-x:hidden;
     }
 
-    html{scroll-snap-type:y proximity; scroll-padding-top: 90px;}
-    body{scroll-snap-type:y proximity;}
+    /* Desktop: let sections snap cleanly without JS fighting scroll */
+    html{scroll-snap-type:y mandatory; scroll-padding-top: 90px;}
 
     /* ====== BACKGROUND LAYERS (no tiling) ====== */
     .bg{
@@ -175,7 +175,7 @@
 
     /* ====== PAGE / PANELS ====== */
     main{scroll-behavior:smooth;}
-    section.panel{min-height: 100vh; scroll-snap-align:start;
+    section.panel{min-height: min(100vh, 920px); scroll-snap-align:start;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -248,8 +248,6 @@
       aspect-ratio: 1 / 1;
       display:block;
       filter: saturate(1.12);
-      position: relative;
-      z-index: 2;
     }
 
     .siriHalo{
@@ -262,7 +260,6 @@
       opacity:.9;
       pointer-events:none;
       animation: haloPulse 4.6s ease-in-out infinite;
-      z-index: 1;
     }
     @keyframes haloPulse{
       0%,100%{transform:scale(.96); opacity:.75}
@@ -286,7 +283,6 @@
       box-shadow: 0 26px 80px rgba(0,0,0,.45);
       backdrop-filter: blur(16px) saturate(1.25);
       -webkit-backdrop-filter: blur(16px) saturate(1.25);
-      z-index: 5;
     }
     .blobBadge{
       flex:0 0 auto;
@@ -320,68 +316,6 @@
       0%{opacity:1; transform:translateY(0) scale(1); filter: blur(0);}
       100%{opacity:0; transform:translateY(-8px) scale(.985); filter: blur(8px);}
     }
-
-
-/* Emitted message bubbles (hero micro-copy) */
-.orbEmit{
-  position:absolute; inset:0;
-  pointer-events:none;
-  z-index: 4;
-}
-.orbBubble{
-  position:absolute;
-  left:50%; top:50%;
-  width: min(360px, calc(100vw - 54px));
-  transform: translate(-50%, -50%);
-  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
-  border: 1px solid rgba(255,255,255,.14);
-  border-radius: 18px;
-  padding: 12px 14px;
-  color: rgba(255,255,255,.92);
-  box-shadow: 0 18px 60px rgba(0,0,0,.35);
-  backdrop-filter: blur(16px) saturate(1.15);
-  -webkit-backdrop-filter: blur(16px) saturate(1.15);
-  display:flex; gap:10px; align-items:flex-start;
-  animation: bubbleOut 3.6s ease forwards;
-  transform-origin: 50% 50%;
-}
-.orbBubble .dot{
-  width:10px; height:10px; border-radius:50%;
-  margin-top:6px;
-  background: radial-gradient(circle, rgba(255,255,255,.95), rgba(var(--a2),.65));
-  box-shadow: 0 0 16px rgba(var(--a2),.28);
-  flex:0 0 auto;
-}
-.orbBubble .txt{
-  font-size: 13px;
-  line-height: 1.35;
-  letter-spacing: .1px;
-}
-.orbWave{
-  position:absolute;
-  left:50%; top:50%;
-  width:min(520px, 92vw);
-  height:min(260px, 60vw);
-  transform: translate(-50%, -50%);
-  opacity:.65;
-  filter: blur(.2px);
-  animation: waveOut 3.6s ease forwards;
-  mix-blend-mode: screen;
-  z-index: 3;
-  pointer-events:none;
-}
-@keyframes bubbleOut{
-  0%{ opacity:0; transform: translate(-50%,-50%) scale(.92); }
-  12%{ opacity:1; }
-  70%{ opacity:1; transform: translate(-50%,-78%) scale(1); }
-  100%{ opacity:0; transform: translate(-50%,-110%) scale(.98); }
-}
-@keyframes waveOut{
-  0%{ opacity:0; transform: translate(-50%,-50%) scale(.85); }
-  14%{ opacity:.75; }
-  75%{ opacity:.55; transform: translate(-50%,-70%) scale(1.05); }
-  100%{ opacity:0; transform: translate(-50%,-92%) scale(1.15); }
-}
 
 
 /* ====== FAQ AUTO SCROLL ====== */
@@ -586,27 +520,7 @@ html,body{background-color:var(--bg0); overscroll-behavior-y:none;}
   opacity: .95;
 }
 
-/* ambient light spots */
-.lightSpots{
-  position:fixed; inset:-120px; pointer-events:none; z-index:-1;
-  filter: blur(24px) saturate(1.4);
-}
-.lightSpots::before, .lightSpots::after{
-  content:""; position:absolute; width:520px; height:520px; border-radius:999px;
-  background: radial-gradient(circle at 30% 30%, rgba(var(--a1),.65), rgba(var(--a1),0) 60%);
-  opacity:.55;
-  transform: translate3d(-10%, 12%, 0);
-  animation: float1 12s ease-in-out infinite;
-}
-.lightSpots::after{
-  width:660px; height:660px;
-  background: radial-gradient(circle at 70% 35%, rgba(var(--a3),.55), rgba(var(--a3),0) 62%);
-  opacity:.45;
-  transform: translate3d(62%, 44%, 0);
-  animation: float2 16s ease-in-out infinite;
-}
-@keyframes float1{50%{transform: translate3d(6%, 6%, 0) scale(1.04)}}
-@keyframes float2{50%{transform: translate3d(56%, 38%, 0) scale(1.03)}}
+/* removed: ambient light spots layer (lightSpots) */
 
 .brand{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); font-weight:700; letter-spacing:.2px}
 .brandLogo{width:30px; height:30px; display:block; border-radius:10px; filter: drop-shadow(0 10px 22px rgba(0,220,255,.26)) saturate(1.2)}
@@ -615,7 +529,7 @@ html,body{background-color:var(--bg0); overscroll-behavior-y:none;}
 .pressed{transform: translateY(1px) scale(.985) !important; filter: saturate(1.2) !important;}</style>
 </head>
 <body>
-<div aria-hidden="true" class="lightSpots"></div>
+<!-- removed: extra ambient light layer (lightSpots) -->
 <div aria-hidden="true" class="safeTop"></div>
 <div class="bg"></div>
 <header class="nav">
@@ -909,6 +823,50 @@ document.addEventListener('pointerdown', (e)=>{
     revealEls.forEach(el => revObs.observe(el));
 
     // Active section tracking + dynamic accent
+    function rgbCsvToHsl(csv){
+      const [r,g,b] = csv.split(',').map(s=>parseFloat(s.trim())/255);
+      const max=Math.max(r,g,b), min=Math.min(r,g,b);
+      let h=0,s=0,l=(max+min)/2;
+      if(max!==min){
+        const d=max-min;
+        s = l>0.5 ? d/(2-max-min) : d/(max+min);
+        switch(max){
+          case r: h=(g-b)/d + (g<b?6:0); break;
+          case g: h=(b-r)/d + 2; break;
+          case b: h=(r-g)/d + 4; break;
+        }
+        h/=6;
+      }
+      return {h, s, l};
+    }
+    function hslToRgbCsv(h,s,l){
+      function hue2rgb(p,q,t){
+        if(t<0) t+=1; if(t>1) t-=1;
+        if(t<1/6) return p + (q-p)*6*t;
+        if(t<1/2) return q;
+        if(t<2/3) return p + (q-p)*(2/3 - t)*6;
+        return p;
+      }
+      let r,g,b;
+      if(s===0){ r=g=b=l; }
+      else{
+        const q = l<0.5 ? l*(1+s) : l + s - l*s;
+        const p = 2*l - q;
+        r = hue2rgb(p,q,h+1/3);
+        g = hue2rgb(p,q,h);
+        b = hue2rgb(p,q,h-1/3);
+      }
+      return `${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)}`;
+    }
+    function setAccentPalette(a2Csv){
+      // a2 is the section accent. Derive a1/a3 as nearby hues so the blob + background feel consistent.
+      const {h,s,l} = rgbCsvToHsl(a2Csv);
+      const a1 = hslToRgbCsv((h - 0.08 + 1)%1, Math.min(1, s*1.05), Math.min(0.70, l*1.06));
+      const a3 = hslToRgbCsv((h + 0.10)%1, Math.min(1, s*0.95), Math.max(0.35, l*0.95));
+      document.documentElement.style.setProperty('--a2', a2Csv);
+      document.documentElement.style.setProperty('--a1', a1);
+      document.documentElement.style.setProperty('--a3', a3);
+    }
     const secObs = new IntersectionObserver((entries) => {
       const visible = entries
         .filter(e => e.isIntersecting)
@@ -919,7 +877,7 @@ document.addEventListener('pointerdown', (e)=>{
       // accent
       const accent = visible.target.dataset.accent;
       if(accent){
-        document.documentElement.style.setProperty('--a2', accent);
+        setAccentPalette(accent);
       }
 
       navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
@@ -979,52 +937,9 @@ document.querySelectorAll('#mobileMenu [data-jump]').forEach(a=>{
   });
 });
 
-// ===== Gentle snap assist (desktop) =====
-let scrollSnapT;
-let lastY = window.scrollY;
-let lastTime = performance.now();
-let lastDir = 0;
-
-function nearestPanel(){
-  let best = null;
-  let bestDist = 1e9;
-  for(const sec of panels){
-    const r = sec.getBoundingClientRect();
-    const d = Math.abs(r.top - 6);
-    if(d < bestDist){ bestDist = d; best = sec; }
-  }
-  return {sec: best, dist: bestDist};
-}
-
-function nearBottom(){
-  const y = window.scrollY;
-  const h = window.innerHeight;
-  const max = document.documentElement.scrollHeight || document.body.scrollHeight;
-  return (y + h) > (max - 260);
-}
-
-window.addEventListener('scroll', ()=>{
-  if(window.matchMedia('(max-width: 820px)').matches) return; // don't fight mobile
-  const y = window.scrollY;
-  const now = performance.now();
-  const dy = y - lastY;
-  const dt = Math.max(16, now - lastTime);
-  const vel = dy / dt;
-  lastDir = dy > 0 ? 1 : (dy < 0 ? -1 : lastDir);
-  lastY = y;
-  lastTime = now;
-
-  clearTimeout(scrollSnapT);
-  scrollSnapT = setTimeout(()=>{
-    if(nearBottom()) return; // allow reaching footer / end of page
-    const {sec, dist} = nearestPanel();
-    if(!sec) return;
-    const slow = Math.abs(vel) < 0.22;
-    if((dist < 150) || (slow && dist < 240)){
-      sec.scrollIntoView({behavior:'smooth', block:'start'});
-    }
-  }, 160);
-}, {passive:true});
+// NOTE: removed the JS "snap assist" because it was fighting the user's scroll
+// (especially on trackpads) and desyncing the dot navigation. CSS scroll-snap
+// now handles desktop snapping reliably.
 
 // ===== Living blob: mouse + scroll reaction + auto bubbles =====
 const scene = document.querySelector('.scene');
@@ -1278,8 +1193,8 @@ function drawBlob(ts){
   const w=blobCanvas.width, h=blobCanvas.height;
   const dpr=(window.devicePixelRatio||1);
 
-  sx += (mx - sx) * 0.08;
-  sy += (my - sy) * 0.08;
+  sx += (mx - sx) * 0.07;
+  sy += (my - sy) * 0.07;
 
   const wob=scrollWobble; scrollWobble*=0.90;
   palette=parseAccent();
@@ -1287,152 +1202,62 @@ function drawBlob(ts){
   ctx.clearRect(0,0,w,h);
   const cx=w/2, cy=h/2;
   const baseR=(Math.min(w,h)*0.33)*(1+Math.abs(wob)*0.06);
-
-  // Siri/Venom style: multi-layer liquid with refractive rim + inner metaballs
-  const points=110;
+  const points=96;
   const amp=baseR*0.12;
-  const amp2=baseR*0.08;
+  const amp2=baseR*0.09;
 
-  // shared gradient driven by current accent
-  const grad=ctx.createRadialGradient(
-    cx - sx*baseR*0.22, cy - sy*baseR*0.18, baseR*0.10,
-    cx, cy, baseR*1.70
-  );
-  grad.addColorStop(0.00, `rgba(${palette.a1}, .98)`);
-  grad.addColorStop(0.48, `rgba(${palette.a2}, .92)`);
-  grad.addColorStop(1.00, `rgba(${palette.a3}, .70)`);
+  const grad=ctx.createRadialGradient(cx - sx*baseR*0.22, cy - sy*baseR*0.18, baseR*0.10, cx, cy, baseR*1.55);
+  grad.addColorStop(0.00, `rgba(${palette.a1}, .96)`);
+  grad.addColorStop(0.52, `rgba(${palette.a2}, .92)`);
+  grad.addColorStop(1.00, `rgba(${palette.a3}, .78)`);
 
-  function buildPath(scale=1, phase=0){
-    ctx.beginPath();
-    for(let i=0;i<=points;i++){
-      const a=(i/points)*Math.PI*2;
-      const nx=Math.cos(a), ny=Math.sin(a);
-
-      // multi-octave noise + sine tension
-      const n1=noise.noise2D(nx*1.15 + t*0.45 + phase, ny*1.15 + t*0.45 + phase);
-      const n2=noise.noise2D(nx*2.65 - t*0.25 - phase, ny*2.65 - t*0.25 - phase);
-      const s=Math.sin(t*3.6 + i*0.23 + phase);
-      const pull=(nx*sx + ny*sy) * 0.70;
-
-      const r = (baseR*scale)
-        + (n1*amp*0.85)
-        + (n2*amp*0.35)
-        + (s*amp2*0.9)
-        + (pull*baseR*0.14)
-        + (wob*baseR*0.06*Math.sin(a*3.0));
-
-      const x=cx+nx*r, y=cy+ny*r;
-      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-    }
-    ctx.closePath();
-  }
-
-  // ===== outer aura glow =====
+  // glow
   ctx.save();
-  ctx.filter=`blur(${14*dpr}px)`;
-  ctx.globalAlpha=0.34;
+  ctx.filter=`blur(${10*dpr}px)`;
+  ctx.globalAlpha=0.32;
   ctx.fillStyle=grad;
-  buildPath(1.03, 0.0);
-  ctx.fill();
+  ctx.beginPath();
+  for(let i=0;i<=points;i++){
+    const a=(i/points)*Math.PI*2;
+    const nx=Math.cos(a), ny=Math.sin(a);
+    const n=noise.noise2D(nx*1.0 + t*0.35, ny*1.0 + t*0.35);
+    const s=Math.sin(t*3.2 + i*0.22);
+    const pull=(nx*sx + ny*sy) * 0.60;
+    const r=baseR + (n*amp) + (s*amp2) + (pull*baseR*0.12) + (wob*baseR*0.06*Math.sin(a*2));
+    const x=cx+nx*r, y=cy+ny*r;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath(); ctx.fill();
   ctx.restore();
 
-  // ===== main liquid body =====
+  // body
   ctx.save();
-  ctx.globalAlpha=0.98;
+  ctx.globalAlpha=0.96;
   ctx.fillStyle=grad;
-  buildPath(1.00, 0.7);
-  ctx.fill();
+  ctx.beginPath();
+  for(let i=0;i<=points;i++){
+    const a=(i/points)*Math.PI*2;
+    const nx=Math.cos(a), ny=Math.sin(a);
+    const n=noise.noise2D(nx*1.4 + t*0.55, ny*1.4 + t*0.55);
+    const s=Math.sin(t*3.8 + i*0.25);
+    const pull=(nx*sx + ny*sy) * 0.70;
+    const r=baseR + (n*amp*0.95) + (s*amp2*0.9) + (pull*baseR*0.14) + (wob*baseR*0.05*Math.sin(a*3));
+    const x=cx+nx*r, y=cy+ny*r;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
 
-  // soft inner shading (depth)
-  ctx.globalCompositeOperation='multiply';
-  const shade=ctx.createRadialGradient(cx+sx*baseR*0.22, cy+sy*baseR*0.22, baseR*0.05, cx, cy, baseR*1.25);
-  shade.addColorStop(0,'rgba(0,0,0,0)');
-  shade.addColorStop(1,'rgba(0,0,0,.42)');
-  ctx.fillStyle=shade;
-  buildPath(1.00, 0.7);
-  ctx.fill();
-
-  // ===== clip to blob for inner effects =====
-  ctx.globalCompositeOperation='source-over';
-  buildPath(0.995, 0.7);
-  ctx.clip();
-
-  // ===== inner metaballs (Siri-like bubbles) =====
+  // glossy highlight
   ctx.save();
   ctx.globalCompositeOperation='screen';
-  const bubbles = [
-    {k:0.85, r:0.44, sp:0.55},
-    {k:1.35, r:0.32, sp:0.72},
-    {k:1.95, r:0.26, sp:0.88},
-    {k:2.55, r:0.22, sp:1.10},
-    {k:3.15, r:0.18, sp:1.35},
-  ];
-  for(let i=0;i<bubbles.length;i++){
-    const b=bubbles[i];
-    const px = cx + Math.sin(t*b.sp + i*1.7 + sx*0.9) * baseR * 0.55;
-    const py = cy + Math.cos(t*b.sp*0.92 + i*1.3 + sy*0.9) * baseR * 0.40;
-    const rr = baseR * b.r * (1 + 0.10*Math.sin(t*2.2 + i));
-    const g = ctx.createRadialGradient(px - rr*0.18, py - rr*0.18, rr*0.05, px, py, rr);
-    g.addColorStop(0, `rgba(${palette.a1}, .55)`);
-    g.addColorStop(0.45, `rgba(${palette.a2}, .22)`);
-    g.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.globalAlpha = 0.55 - i*0.06;
-    ctx.fillStyle=g;
-    ctx.beginPath(); ctx.arc(px,py,rr,0,Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-
-  // ===== flowing bands / caustics =====
-  ctx.save();
-  ctx.globalCompositeOperation='overlay';
-  ctx.globalAlpha=0.22;
-  const bandW = baseR*2.6;
-  for(let i=0;i<4;i++){
-    const yy = cy + (i-1.5)*baseR*0.28 + Math.sin(t*0.85 + i)*baseR*0.10 + sy*baseR*0.10;
-    const lg = ctx.createLinearGradient(cx-bandW/2, yy, cx+bandW/2, yy+baseR*0.12);
-    lg.addColorStop(0,'rgba(255,255,255,0)');
-    lg.addColorStop(0.45, `rgba(${palette.a1}, .38)`);
-    lg.addColorStop(0.62, `rgba(${palette.a3}, .18)`);
-    lg.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle=lg;
-    ctx.fillRect(cx-bandW/2, yy-baseR*0.10, bandW, baseR*0.22);
-  }
-  ctx.restore();
-
-  // ===== glossy specular streak =====
-  ctx.save();
-  ctx.globalCompositeOperation='screen';
-  const hgrad=ctx.createRadialGradient(cx-baseR*0.35, cy-baseR*0.38, baseR*0.05, cx-baseR*0.18, cy-baseR*0.18, baseR*1.05);
-  hgrad.addColorStop(0,'rgba(255,255,255,.62)');
-  hgrad.addColorStop(0.30,'rgba(255,255,255,.18)');
+  const hgrad=ctx.createRadialGradient(cx-baseR*0.35, cy-baseR*0.35, baseR*0.05, cx-baseR*0.20, cy-baseR*0.20, baseR*1.0);
+  hgrad.addColorStop(0,'rgba(255,255,255,.55)');
+  hgrad.addColorStop(0.38,'rgba(255,255,255,.16)');
   hgrad.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.globalAlpha=0.95;
   ctx.fillStyle=hgrad;
-  ctx.beginPath(); ctx.arc(cx,cy,baseR*1.25,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.arc(cx,cy,baseR*1.2,0,Math.PI*2); ctx.fill();
   ctx.restore();
-
-  // ===== refractive rim (double stroke) =====
-  ctx.save();
-  ctx.globalCompositeOperation='screen';
-  ctx.lineWidth = Math.max(1.2*dpr, 2.0*dpr);
-  const rim = ctx.createLinearGradient(cx-baseR, cy-baseR, cx+baseR, cy+baseR);
-  rim.addColorStop(0, `rgba(${palette.a1}, .55)`);
-  rim.addColorStop(0.55, 'rgba(255,255,255,.20)');
-  rim.addColorStop(1, `rgba(${palette.a3}, .42)`);
-  ctx.strokeStyle=rim;
-  ctx.globalAlpha=0.75;
-  buildPath(1.002, 0.7);
-  ctx.stroke();
-
-  ctx.filter=`blur(${1.6*dpr}px)`;
-  ctx.lineWidth = Math.max(0.9*dpr, 1.4*dpr);
-  ctx.strokeStyle=`rgba(${palette.a2}, .55)`;
-  ctx.globalAlpha=0.65;
-  buildPath(1.008, 0.1);
-  ctx.stroke();
-  ctx.restore();
-
-  ctx.restore(); // body/clip
 
   requestAnimationFrame(drawBlob);
 }
@@ -1464,6 +1289,12 @@ function startBubbles(){
   setTimeout(spawnBubble, 650);
 }
 startBubbles();
+
+}
+requestAnimationFrame(anim);
+
+// 3D blob disabled (CSS blob used instead)
+;
 </script>
 <div aria-hidden="true" class="safeBot"></div>
 </body>
