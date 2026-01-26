@@ -175,7 +175,7 @@
 
     /* ====== PAGE / PANELS ====== */
     main{scroll-behavior:smooth;}
-    section.panel{min-height: min(100vh, 920px); scroll-snap-align:start;
+    section.panel{min-height: 100vh; scroll-snap-align:start;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -1464,12 +1464,6 @@ function startBubbles(){
   setTimeout(spawnBubble, 650);
 }
 startBubbles();
-
-}
-requestAnimationFrame(anim);
-
-// 3D blob disabled (CSS blob used instead)
-;
 </script>
 <div aria-hidden="true" class="safeBot"></div>
 </body>
