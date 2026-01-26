@@ -248,6 +248,8 @@
       aspect-ratio: 1 / 1;
       display:block;
       filter: saturate(1.12);
+      position: relative;
+      z-index: 2;
     }
 
     .siriHalo{
@@ -260,6 +262,7 @@
       opacity:.9;
       pointer-events:none;
       animation: haloPulse 4.6s ease-in-out infinite;
+      z-index: 1;
     }
     @keyframes haloPulse{
       0%,100%{transform:scale(.96); opacity:.75}
@@ -283,6 +286,7 @@
       box-shadow: 0 26px 80px rgba(0,0,0,.45);
       backdrop-filter: blur(16px) saturate(1.25);
       -webkit-backdrop-filter: blur(16px) saturate(1.25);
+      z-index: 5;
     }
     .blobBadge{
       flex:0 0 auto;
@@ -316,6 +320,68 @@
       0%{opacity:1; transform:translateY(0) scale(1); filter: blur(0);}
       100%{opacity:0; transform:translateY(-8px) scale(.985); filter: blur(8px);}
     }
+
+
+/* Emitted message bubbles (hero micro-copy) */
+.orbEmit{
+  position:absolute; inset:0;
+  pointer-events:none;
+  z-index: 4;
+}
+.orbBubble{
+  position:absolute;
+  left:50%; top:50%;
+  width: min(360px, calc(100vw - 54px));
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 18px;
+  padding: 12px 14px;
+  color: rgba(255,255,255,.92);
+  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  display:flex; gap:10px; align-items:flex-start;
+  animation: bubbleOut 3.6s ease forwards;
+  transform-origin: 50% 50%;
+}
+.orbBubble .dot{
+  width:10px; height:10px; border-radius:50%;
+  margin-top:6px;
+  background: radial-gradient(circle, rgba(255,255,255,.95), rgba(var(--a2),.65));
+  box-shadow: 0 0 16px rgba(var(--a2),.28);
+  flex:0 0 auto;
+}
+.orbBubble .txt{
+  font-size: 13px;
+  line-height: 1.35;
+  letter-spacing: .1px;
+}
+.orbWave{
+  position:absolute;
+  left:50%; top:50%;
+  width:min(520px, 92vw);
+  height:min(260px, 60vw);
+  transform: translate(-50%, -50%);
+  opacity:.65;
+  filter: blur(.2px);
+  animation: waveOut 3.6s ease forwards;
+  mix-blend-mode: screen;
+  z-index: 3;
+  pointer-events:none;
+}
+@keyframes bubbleOut{
+  0%{ opacity:0; transform: translate(-50%,-50%) scale(.92); }
+  12%{ opacity:1; }
+  70%{ opacity:1; transform: translate(-50%,-78%) scale(1); }
+  100%{ opacity:0; transform: translate(-50%,-110%) scale(.98); }
+}
+@keyframes waveOut{
+  0%{ opacity:0; transform: translate(-50%,-50%) scale(.85); }
+  14%{ opacity:.75; }
+  75%{ opacity:.55; transform: translate(-50%,-70%) scale(1.05); }
+  100%{ opacity:0; transform: translate(-50%,-92%) scale(1.15); }
+}
 
 
 /* ====== FAQ AUTO SCROLL ====== */
@@ -1212,8 +1278,8 @@ function drawBlob(ts){
   const w=blobCanvas.width, h=blobCanvas.height;
   const dpr=(window.devicePixelRatio||1);
 
-  sx += (mx - sx) * 0.07;
-  sy += (my - sy) * 0.07;
+  sx += (mx - sx) * 0.08;
+  sy += (my - sy) * 0.08;
 
   const wob=scrollWobble; scrollWobble*=0.90;
   palette=parseAccent();
@@ -1221,62 +1287,152 @@ function drawBlob(ts){
   ctx.clearRect(0,0,w,h);
   const cx=w/2, cy=h/2;
   const baseR=(Math.min(w,h)*0.33)*(1+Math.abs(wob)*0.06);
-  const points=96;
+
+  // Siri/Venom style: multi-layer liquid with refractive rim + inner metaballs
+  const points=110;
   const amp=baseR*0.12;
-  const amp2=baseR*0.09;
+  const amp2=baseR*0.08;
 
-  const grad=ctx.createRadialGradient(cx - sx*baseR*0.22, cy - sy*baseR*0.18, baseR*0.10, cx, cy, baseR*1.55);
-  grad.addColorStop(0.00, `rgba(${palette.a1}, .96)`);
-  grad.addColorStop(0.52, `rgba(${palette.a2}, .92)`);
-  grad.addColorStop(1.00, `rgba(${palette.a3}, .78)`);
+  // shared gradient driven by current accent
+  const grad=ctx.createRadialGradient(
+    cx - sx*baseR*0.22, cy - sy*baseR*0.18, baseR*0.10,
+    cx, cy, baseR*1.70
+  );
+  grad.addColorStop(0.00, `rgba(${palette.a1}, .98)`);
+  grad.addColorStop(0.48, `rgba(${palette.a2}, .92)`);
+  grad.addColorStop(1.00, `rgba(${palette.a3}, .70)`);
 
-  // glow
-  ctx.save();
-  ctx.filter=`blur(${10*dpr}px)`;
-  ctx.globalAlpha=0.32;
-  ctx.fillStyle=grad;
-  ctx.beginPath();
-  for(let i=0;i<=points;i++){
-    const a=(i/points)*Math.PI*2;
-    const nx=Math.cos(a), ny=Math.sin(a);
-    const n=noise.noise2D(nx*1.0 + t*0.35, ny*1.0 + t*0.35);
-    const s=Math.sin(t*3.2 + i*0.22);
-    const pull=(nx*sx + ny*sy) * 0.60;
-    const r=baseR + (n*amp) + (s*amp2) + (pull*baseR*0.12) + (wob*baseR*0.06*Math.sin(a*2));
-    const x=cx+nx*r, y=cy+ny*r;
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  function buildPath(scale=1, phase=0){
+    ctx.beginPath();
+    for(let i=0;i<=points;i++){
+      const a=(i/points)*Math.PI*2;
+      const nx=Math.cos(a), ny=Math.sin(a);
+
+      // multi-octave noise + sine tension
+      const n1=noise.noise2D(nx*1.15 + t*0.45 + phase, ny*1.15 + t*0.45 + phase);
+      const n2=noise.noise2D(nx*2.65 - t*0.25 - phase, ny*2.65 - t*0.25 - phase);
+      const s=Math.sin(t*3.6 + i*0.23 + phase);
+      const pull=(nx*sx + ny*sy) * 0.70;
+
+      const r = (baseR*scale)
+        + (n1*amp*0.85)
+        + (n2*amp*0.35)
+        + (s*amp2*0.9)
+        + (pull*baseR*0.14)
+        + (wob*baseR*0.06*Math.sin(a*3.0));
+
+      const x=cx+nx*r, y=cy+ny*r;
+      if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.closePath();
   }
-  ctx.closePath(); ctx.fill();
+
+  // ===== outer aura glow =====
+  ctx.save();
+  ctx.filter=`blur(${14*dpr}px)`;
+  ctx.globalAlpha=0.34;
+  ctx.fillStyle=grad;
+  buildPath(1.03, 0.0);
+  ctx.fill();
   ctx.restore();
 
-  // body
+  // ===== main liquid body =====
   ctx.save();
-  ctx.globalAlpha=0.96;
+  ctx.globalAlpha=0.98;
   ctx.fillStyle=grad;
-  ctx.beginPath();
-  for(let i=0;i<=points;i++){
-    const a=(i/points)*Math.PI*2;
-    const nx=Math.cos(a), ny=Math.sin(a);
-    const n=noise.noise2D(nx*1.4 + t*0.55, ny*1.4 + t*0.55);
-    const s=Math.sin(t*3.8 + i*0.25);
-    const pull=(nx*sx + ny*sy) * 0.70;
-    const r=baseR + (n*amp*0.95) + (s*amp2*0.9) + (pull*baseR*0.14) + (wob*baseR*0.05*Math.sin(a*3));
-    const x=cx+nx*r, y=cy+ny*r;
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  }
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
+  buildPath(1.00, 0.7);
+  ctx.fill();
 
-  // glossy highlight
+  // soft inner shading (depth)
+  ctx.globalCompositeOperation='multiply';
+  const shade=ctx.createRadialGradient(cx+sx*baseR*0.22, cy+sy*baseR*0.22, baseR*0.05, cx, cy, baseR*1.25);
+  shade.addColorStop(0,'rgba(0,0,0,0)');
+  shade.addColorStop(1,'rgba(0,0,0,.42)');
+  ctx.fillStyle=shade;
+  buildPath(1.00, 0.7);
+  ctx.fill();
+
+  // ===== clip to blob for inner effects =====
+  ctx.globalCompositeOperation='source-over';
+  buildPath(0.995, 0.7);
+  ctx.clip();
+
+  // ===== inner metaballs (Siri-like bubbles) =====
   ctx.save();
   ctx.globalCompositeOperation='screen';
-  const hgrad=ctx.createRadialGradient(cx-baseR*0.35, cy-baseR*0.35, baseR*0.05, cx-baseR*0.20, cy-baseR*0.20, baseR*1.0);
-  hgrad.addColorStop(0,'rgba(255,255,255,.55)');
-  hgrad.addColorStop(0.38,'rgba(255,255,255,.16)');
-  hgrad.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.fillStyle=hgrad;
-  ctx.beginPath(); ctx.arc(cx,cy,baseR*1.2,0,Math.PI*2); ctx.fill();
+  const bubbles = [
+    {k:0.85, r:0.44, sp:0.55},
+    {k:1.35, r:0.32, sp:0.72},
+    {k:1.95, r:0.26, sp:0.88},
+    {k:2.55, r:0.22, sp:1.10},
+    {k:3.15, r:0.18, sp:1.35},
+  ];
+  for(let i=0;i<bubbles.length;i++){
+    const b=bubbles[i];
+    const px = cx + Math.sin(t*b.sp + i*1.7 + sx*0.9) * baseR * 0.55;
+    const py = cy + Math.cos(t*b.sp*0.92 + i*1.3 + sy*0.9) * baseR * 0.40;
+    const rr = baseR * b.r * (1 + 0.10*Math.sin(t*2.2 + i));
+    const g = ctx.createRadialGradient(px - rr*0.18, py - rr*0.18, rr*0.05, px, py, rr);
+    g.addColorStop(0, `rgba(${palette.a1}, .55)`);
+    g.addColorStop(0.45, `rgba(${palette.a2}, .22)`);
+    g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.globalAlpha = 0.55 - i*0.06;
+    ctx.fillStyle=g;
+    ctx.beginPath(); ctx.arc(px,py,rr,0,Math.PI*2); ctx.fill();
+  }
   ctx.restore();
+
+  // ===== flowing bands / caustics =====
+  ctx.save();
+  ctx.globalCompositeOperation='overlay';
+  ctx.globalAlpha=0.22;
+  const bandW = baseR*2.6;
+  for(let i=0;i<4;i++){
+    const yy = cy + (i-1.5)*baseR*0.28 + Math.sin(t*0.85 + i)*baseR*0.10 + sy*baseR*0.10;
+    const lg = ctx.createLinearGradient(cx-bandW/2, yy, cx+bandW/2, yy+baseR*0.12);
+    lg.addColorStop(0,'rgba(255,255,255,0)');
+    lg.addColorStop(0.45, `rgba(${palette.a1}, .38)`);
+    lg.addColorStop(0.62, `rgba(${palette.a3}, .18)`);
+    lg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=lg;
+    ctx.fillRect(cx-bandW/2, yy-baseR*0.10, bandW, baseR*0.22);
+  }
+  ctx.restore();
+
+  // ===== glossy specular streak =====
+  ctx.save();
+  ctx.globalCompositeOperation='screen';
+  const hgrad=ctx.createRadialGradient(cx-baseR*0.35, cy-baseR*0.38, baseR*0.05, cx-baseR*0.18, cy-baseR*0.18, baseR*1.05);
+  hgrad.addColorStop(0,'rgba(255,255,255,.62)');
+  hgrad.addColorStop(0.30,'rgba(255,255,255,.18)');
+  hgrad.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.globalAlpha=0.95;
+  ctx.fillStyle=hgrad;
+  ctx.beginPath(); ctx.arc(cx,cy,baseR*1.25,0,Math.PI*2); ctx.fill();
+  ctx.restore();
+
+  // ===== refractive rim (double stroke) =====
+  ctx.save();
+  ctx.globalCompositeOperation='screen';
+  ctx.lineWidth = Math.max(1.2*dpr, 2.0*dpr);
+  const rim = ctx.createLinearGradient(cx-baseR, cy-baseR, cx+baseR, cy+baseR);
+  rim.addColorStop(0, `rgba(${palette.a1}, .55)`);
+  rim.addColorStop(0.55, 'rgba(255,255,255,.20)');
+  rim.addColorStop(1, `rgba(${palette.a3}, .42)`);
+  ctx.strokeStyle=rim;
+  ctx.globalAlpha=0.75;
+  buildPath(1.002, 0.7);
+  ctx.stroke();
+
+  ctx.filter=`blur(${1.6*dpr}px)`;
+  ctx.lineWidth = Math.max(0.9*dpr, 1.4*dpr);
+  ctx.strokeStyle=`rgba(${palette.a2}, .55)`;
+  ctx.globalAlpha=0.65;
+  buildPath(1.008, 0.1);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.restore(); // body/clip
 
   requestAnimationFrame(drawBlob);
 }
