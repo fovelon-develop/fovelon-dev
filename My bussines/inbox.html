@@ -208,17 +208,9 @@ input, textarea, select{font-size:16px;}
 @keyframes float1{50%{transform: translate3d(6%, 6%, 0) scale(1.04)}}
 @keyframes float2{50%{transform: translate3d(56%, 38%, 0) scale(1.03)}}
 .safeTop{height: env(safe-area-inset-top); background:#03040C;}
-.safeBot{height: env(safe-area-inset-bottom); background:#050E1D;}
-    /* Inbox header closer to widget header */
-    .inboxTop .nav{background: linear-gradient(180deg, rgba(var(--a2),.22), rgba(0,0,0,0));}
-    .inboxTop .nav::after{content:"";position:absolute;inset:0;pointer-events:none;
-      background: radial-gradient(80% 120% at 50% -10%, rgba(var(--a1),.18), rgba(0,0,0,0) 55%);}
-
-
-input, textarea, select{font-size:16px !important;}
-</style>
+.safeBot{height: env(safe-area-inset-bottom); background:#050E1D;}</style>
 </head>
-<body class="inboxTop">
+<body>
 <div aria-hidden="true" class="lightSpots"></div>
 <div aria-hidden="true" class="safeTop"></div>
 <div class="topbar">
