@@ -22,6 +22,9 @@
       --a1: 36, 245, 190;   /* cyan */
       --a2: 0, 180, 255;  /* blue */
       --a3: 160, 110, 255;  /* violet */
+      --b1: var(--a1);
+      --b2: var(--a2);
+      --b3: var(--a3);
       --accent: rgb(var(--a2));
       --accent2: rgb(var(--a1));
       --accent3: rgb(var(--a3));
@@ -1056,8 +1059,9 @@ document.addEventListener('pointerdown', (e)=>{
       // accent
       const accent = visible.target.dataset.accent;
       if(accent){
-        document.documentElement.style.setProperty('--a2', accent);
-      }
+        document.documentElement.style.setProperty('--b2', accent);
+        // keep background constant; only blob accents update
+}
 
       navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
       dots.forEach(d => d.classList.toggle('active', d.dataset.jump === '#' + id));
@@ -1446,9 +1450,9 @@ window.addEventListener('scroll', ()=>{
 function readAccent(){
   const cs = getComputedStyle(document.documentElement);
   const parse = (v)=> (v||'').trim().split(',').map(x=>Math.max(0, Math.min(255, parseFloat(x)||0)) / 255);
-  const a1 = parse(cs.getPropertyValue('--a1')) || [0.18,0.78,1.0];
-  const a2 = parse(cs.getPropertyValue('--a2')) || [0.41,0.52,1.0];
-  const a3 = parse(cs.getPropertyValue('--a3')) || [0.66,0.48,1.0];
+  const a1 = parse(cs.getPropertyValue('--b1')) || [0.18,0.78,1.0];
+  const a2 = parse(cs.getPropertyValue('--b2')) || [0.41,0.52,1.0];
+  const a3 = parse(cs.getPropertyValue('--b3')) || [0.66,0.48,1.0];
   return {a1,a2,a3};
 }
 let nextAccentAt = 0;
