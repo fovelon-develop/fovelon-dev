@@ -969,7 +969,7 @@ document.addEventListener('pointerdown', (e)=>{
 
       navLinks.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + id));
       dots.forEach(d => d.classList.toggle('active', d.dataset.jump === '#' + id));
-    }, { root: null, threshold: [0.18, 0.30, 0.45, 0.60] });
+    }, { root: null, rootMargin: '-12% 0px -62% 0px', threshold: [0.05, 0.12, 0.22, 0.35] });
 
     panels.forEach(p => secObs.observe(p));
 
@@ -1065,10 +1065,10 @@ window.addEventListener('scroll', ()=>{
     const {sec, dist} = nearestPanel();
     if(!sec) return;
     const slow = Math.abs(vel) < 0.22;
-    if((dist < 110) || (slow && dist < 170)){
+    if((dist < 150) || (slow && dist < 240)){
       sec.scrollIntoView({behavior:'smooth', block:'start'});
     }
-  }, 140);
+  }, 160);
 }, {passive:true});
 
 // ===== Living blob: mouse + scroll reaction + auto bubbles =====
@@ -1157,18 +1157,18 @@ function spawnBubble(){
   b.style.left = x + '%';
   b.style.top = y + '%';
   b.style.transform = `translate(-50%, -50%) rotate(${(Math.random()*8-4).toFixed(2)}deg)`;
-  b.style.animation = 'bubbleOut 3.2s ease forwards';
+  b.style.animation = 'bubbleOut 4.4s ease forwards';
   emit.appendChild(b);
-  setTimeout(()=> b.remove(), 3300);
+  setTimeout(()=> b.remove(), 4550);
 }
 
 let bubbleTimer;
 function startBubbles(){
   clearInterval(bubbleTimer);
   const slow = window.matchMedia('(max-width: 820px)').matches;
-  bubbleTimer = setInterval(spawnBubble, slow ? 3000 : 2100);
+  bubbleTimer = setInterval(spawnBubble, slow ? 5200 : 3600);
   // immediate first
-  setTimeout(spawnBubble, 450);
+  setTimeout(spawnBubble, 650);
 }
 startBubbles();
 
