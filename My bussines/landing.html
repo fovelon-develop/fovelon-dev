@@ -37,12 +37,13 @@
     *{box-sizing:border-box}
     html,body{height:100%}
     html,body{height:100%;}
-    body{overflow:hidden;}
+    body{overflow:hidden; background: radial-gradient(1100px 700px at 50% 12%, rgba(18,32,56,.65), rgba(3,4,12,1) 60%), linear-gradient(180deg, rgba(7,12,26,1), rgba(2,3,10,1));}
     #scrollRoot{
       height:100vh;
       overflow-y:auto;
       scroll-snap-type:y mandatory;
       scroll-behavior:smooth;
+      scroll-padding-top: 88px;
       -webkit-overflow-scrolling:touch;
     }
 
@@ -63,7 +64,7 @@
     /* ====== BACKGROUND LAYERS (no tiling) ====== */
     .bg{
       position:fixed; inset:0;
-      display:none; /* disabled extra background layer */
+      display:block;
       pointer-events:none;
       z-index:-1;
     }
@@ -177,7 +178,7 @@
       display:flex;
       align-items:center;
       justify-content:center;
-      padding: calc(var(--headerH,72px) + 24px) var(--panelPad) 32px;
+      padding: var(--panelPad) var(--panelPad);
       position:relative;
     }
     .panelInner{
@@ -257,18 +258,13 @@
     
     /* Canvas blob (real deformation) */
     .blobCanvas{
-      width: min(260px, 62vw);
-      height: min(260px, 62vw);
+      width: min(360px, 44vw);
+      height: min(360px, 44vw);
       display:block;
-      filter: saturate(1.2);
-      border-radius: 50%;
-      box-shadow:
-        0 0 28px rgba(0,220,255,.18),
-        0 0 64px rgba(120,90,255,.14),
-        0 0 110px rgba(0,220,255,.08);
+      border-radius:50%;
+      filter: saturate(1.15);
     }
-
-    /* Siri-like ambient blob (fallback) */
+/* Siri-like ambient blob (fallback) */
     .siriBlob{display:none; 
       width: min(240px, 60vw);
       aspect-ratio: 1 / 1;
@@ -310,12 +306,8 @@
       pointer-events:none;
       z-index: -1;
     }
-    .siriHalo{
-      position:absolute; inset:0;
-      display:flex; align-items:center; justify-content:center;
-      pointer-events:none;
-    }
-    .siriHalo::before{
+    .siriHalo{display:none;}
+.siriHalo::before{
       content:"";
       width: min(320px, 78vw);
       height: min(160px, 38vw);
