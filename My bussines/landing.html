@@ -625,9 +625,15 @@ html,body{background-color:var(--bg0); overscroll-behavior-y:none;}
   .hero{padding-top: 22px;}
   .container{width: min(100%, calc(100vw - 28px));}
   .cards, .planGrid, .grid2{grid-template-columns: 1fr !important;}
-  .marquee{height:auto;}
+
+  /* HERO: show blob immediately (remove extra CTAs on mobile) */
+  .heroActions{display:none !important;}
+
+  /* FAQ: make questions visible on mobile (absolute marquee collapses when height:auto) */
+  .marquee{height:auto; overflow:visible;}
+  .marqueeInner{position:relative; animation:none;}
+
   .focusDock{display:none;}
-  /* reduce aggressive scroll snapping/auto scroll on mobile */
 }
 
 /* iOS 17+ style glass */
@@ -1026,19 +1032,23 @@ document.querySelectorAll('#mobileMenu [data-jump]').forEach(a=>{
   });
 });
 
-// ===== Desktop wheel/pad paging (one section at a time) =====
+// ===== Auto paging (mobile + desktop) =====
+// Goal: a small scroll gesture advances exactly one section, keeping dots in sync.
+// - Desktop: wheel/trackpad triggers next/prev panel.
+// - Mobile: user drags a bit, then we snap to the nearest logical panel after scroll settles.
 let scrollSnapT;
 let isPaging = false;
 let lastWheelAt = 0;
+let lastScrollY = window.scrollY || document.documentElement.scrollTop || 0;
+let scrollDir = 0; // 1 down, -1 up
+let scrollDebounceT = null;
+let userTouching = false;
 
 function isInteractiveTarget(el){
   if(!el) return false;
   return !!el.closest('input, textarea, select, button, a, [contenteditable="true"], [role="textbox"], .noPaging');
 }
-
 function hasScrollableAncestor(el){
-  // If the wheel event is happening over a scrollable container (cards, carousels, code blocks),
-  // don't hijack it with section paging.
   let cur = el;
   while(cur && cur !== document.body){
     const cs = getComputedStyle(cur);
@@ -1049,20 +1059,17 @@ function hasScrollableAncestor(el){
   }
   return false;
 }
-
 function nearBottom(px=140){
   const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
   const winH = window.innerHeight || document.documentElement.clientHeight || 0;
   const docH = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
   return (scrollTop + winH) >= (docH - px);
 }
-
 function nearTop(px=10){
   const scrollTop = window.scrollY || document.documentElement.scrollTop || 0;
   return scrollTop <= px;
 }
 function panelIndexFromViewport(){
-  // pick the panel whose top is closest to the top of viewport
   let bestI = 0, bestD = 1e9;
   panels.forEach((sec,i)=>{
     const d = Math.abs(sec.getBoundingClientRect().top - 6);
@@ -1076,77 +1083,94 @@ function goToPanel(i){
   if(!sec) return;
   isPaging = true;
   sec.scrollIntoView({behavior:'smooth', block:'start'});
-  // unlock after smooth scroll settles
   clearTimeout(scrollSnapT);
   scrollSnapT = setTimeout(()=>{ isPaging = false; }, 850);
 }
 
+// Desktop wheel/trackpad: one gesture -> one panel
 window.addEventListener('wheel', (e)=>{
-  if(window.matchMedia('(max-width: 820px)').matches) return;
   if(document.documentElement.classList.contains('menuOpen')) return;
   if(isInteractiveTarget(e.target) || hasScrollableAncestor(e.target)) return;
   if(isPaging) { e.preventDefault(); return; }
   if(e.ctrlKey) return; // allow browser zoom
-  if(nearBottom() && e.deltaY > 0) return; // let user reach footer
-  if(nearTop() && e.deltaY < 0) return; // allow browser bounce/top
+  if(nearBottom() && e.deltaY > 0) return;
+  if(nearTop() && e.deltaY < 0) return;
+
   const dy = e.deltaY;
-  if(Math.abs(dy) < 4) return; // ignore micro jitter
+  if(Math.abs(dy) < 4) return;
   const now = performance.now();
   if(now - lastWheelAt < 520) { e.preventDefault(); return; }
   lastWheelAt = now;
+
   e.preventDefault();
   const dir = dy > 0 ? 1 : -1;
   const idx = panelIndexFromViewport();
   goToPanel(idx + dir);
 }, {passive:false});
 
-window.addEventListener('keydown', (e)=>{
-  if(window.matchMedia('(max-width: 820px)').matches) return;
+// Mobile + general: after a small manual scroll, snap to the next/nearest panel.
+window.addEventListener('touchstart', ()=>{ userTouching = true; }, {passive:true});
+window.addEventListener('touchend', ()=>{ userTouching = false; }, {passive:true});
+
+function scheduleSnap(){
   if(isPaging) return;
-  if(['ArrowDown','PageDown',' '].includes(e.key)){
-    e.preventDefault(); goToPanel(panelIndexFromViewport()+1);
+  if(document.documentElement.classList.contains('menuOpen')) return;
+  clearTimeout(scrollDebounceT);
+  scrollDebounceT = setTimeout(()=>{
+    if(isPaging) return;
+    if(document.documentElement.classList.contains('menuOpen')) return;
+    if(userTouching) return;
+
+    const idx = panelIndexFromViewport();
+    const top = panels[idx].getBoundingClientRect().top;
+
+    // If user scrolls down and the current panel top is already above the viewport by a bit,
+    // advance to next. If scrolling up and current panel top is below, go prev.
+    if(scrollDir > 0 && top < -60 && idx < panels.length-1){
+      goToPanel(idx + 1);
+      return;
+    }
+    if(scrollDir < 0 && top > 60 && idx > 0){
+      goToPanel(idx - 1);
+      return;
+    }
+    goToPanel(idx);
+  }, 140);
+}
+
+window.addEventListener('scroll', ()=>{
+  if(isPaging) return;
+  const y = window.scrollY || document.documentElement.scrollTop || 0;
+  const dy = y - lastScrollY;
+  lastScrollY = y;
+  if(Math.abs(dy) < 18) return;
+  scrollDir = dy > 0 ? 1 : -1;
+
+  // Don't snap if the user is interacting with form elements
+  if(isInteractiveTarget(document.activeElement)) return;
+
+  // Allow reaching very bottom/top without fighting the browser
+  if(nearBottom() && scrollDir > 0) return;
+  if(nearTop() && scrollDir < 0) return;
+
+  scheduleSnap();
+}, {passive:true});
+
+// Keyboard paging (optional but useful)
+window.addEventListener('keydown', (e)=>{
+  if(document.documentElement.classList.contains('menuOpen')) return;
+  if(isInteractiveTarget(document.activeElement)) return;
+  if(e.key === 'ArrowDown' || e.key === 'PageDown'){
+    e.preventDefault();
+    goToPanel(panelIndexFromViewport()+1);
   }
-  if(['ArrowUp','PageUp'].includes(e.key)){
-    e.preventDefault(); goToPanel(panelIndexFromViewport()-1);
+  if(e.key === 'ArrowUp' || e.key === 'PageUp'){
+    e.preventDefault();
+    goToPanel(panelIndexFromViewport()-1);
   }
-  if(e.key==='Home'){ e.preventDefault(); goToPanel(0); }
-  if(e.key==='End'){ e.preventDefault(); goToPanel(panels.length-1); }
 });
 
 
-// ===== Living blob: real deformation (sinusoidal noise) + smart accent coloring =====
-const scene = document.querySelector('.scene');
-const canvas = scene ? scene.querySelector('.blobCanvas') : null;
-const halo = document.querySelector('.siriHalo');
-let emit = scene ? scene.querySelector('.orbEmit') : null;
-
-if(scene && !emit){
-  emit = document.createElement('div');
-  emit.className = 'orbEmit';
-  scene.appendChild(emit);
-}
-
-function getAccentRGB(){
-  const v = getComputedStyle(document.documentElement).getPropertyValue('--a2').trim();
-  const parts = v.split(',').map(s=>parseFloat(s.trim())).filter(n=>Number.isFinite(n));
-  if(parts.length===3) return parts;
-  return [46,200,255];
-}
-
-// Smooth color transitions between section accents
-let curRGB = getAccentRGB();
-function lerp(a,b,t){ return a + (b-a)*t; }
-function stepAccent(){
-  const [tr,tg,tb] = getAccentRGB();
-  curRGB = [
-    lerp(curRGB[0], tr, 0.08),
-    lerp(curRGB[1], tg, 0.08),
-    lerp(curRGB[2], tb, 0.08)
-  ];
-  return curRGB;
-}
-
-let ctx, dpr=1;
 function resizeBlob(){
   if(!canvas) return;
   ctx = canvas.getContext('2d');
