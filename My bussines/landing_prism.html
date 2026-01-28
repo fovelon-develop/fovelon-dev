@@ -147,7 +147,7 @@
 
     /* ====== PAGE / PANELS ====== */
     main{scroll-behavior:smooth;}
-    section.panel{min-height: min(100vh, 920px); scroll-snap-align:start;
+    section.panel{min-height: 100svh; min-height: 100vh; scroll-snap-align:start;
       display:flex;
       align-items:center;
       justify-content:center;
@@ -660,9 +660,9 @@
 .safeBot{height: env(safe-area-inset-bottom); min-height: env(safe-area-inset-bottom);}
 
 @media (max-width: 820px){
-  html{scroll-snap-type:none;}
+  html{scroll-snap-type:y mandatory;}
   body{background-attachment: scroll;}
-  section.panel{min-height:auto; padding-top: 86px;}
+  section.panel{min-height: 100svh; min-height: 100vh; padding-top: 86px;}
   .nav{position:sticky; top:0; backdrop-filter: blur(18px) saturate(1.6); padding-top: calc(10px + env(safe-area-inset-top));}
   .hero{padding-top: 22px;}
   .container{width: min(100%, calc(100vw - 28px));}
