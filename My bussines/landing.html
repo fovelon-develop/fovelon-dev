@@ -634,7 +634,17 @@ html,body{background-color:var(--bg0); overscroll-behavior-y:none;}
 .brandLogo{width:30px; height:30px; display:block; border-radius:10px; filter: drop-shadow(0 10px 22px rgba(0,220,255,.26)) saturate(1.2)}
 .brandText{font-size: 15px; opacity:.94}
 
-.pressed{transform: translateY(1px) scale(.985) !important; filter: saturate(1.2) !important;}</style>
+.pressed{transform: translateY(1px) scale(.985) !important; filter: saturate(1.2) !important;}
+
+    /* ====== NO BLOB HALO (patched v10) ====== */
+    /* Remove any extra glow/blur layers that can look like a separate hero overlay */
+    .siriHalo, .orbHalo, .orbWave{ display:none !important; opacity:0 !important; filter:none !important; }
+    .siriBlob, .siriBlob__core, .blobCanvas{ box-shadow:none !important; filter:none !important; }
+    .siriBlob__core::before, .siriBlob__core::after{ content:none !important; display:none !important; }
+    /* If a fallback image is used, ensure it has no glow */
+    .orbFallback{ filter:none !important; box-shadow:none !important; }
+
+</style>
 </head>
 <body>
 <div aria-hidden="true" class="lightSpots"></div>

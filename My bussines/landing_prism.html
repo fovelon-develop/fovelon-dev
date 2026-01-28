@@ -708,7 +708,25 @@
 .brandLogo{width:30px; height:30px; display:block; border-radius:10px; filter: drop-shadow(0 10px 22px rgba(0,220,255,.26)) saturate(1.2)}
 .brandText{font-size: 15px; opacity:.94}
 
-.pressed{transform: translateY(1px) scale(.985) !important; filter: saturate(1.2) !important;}</style>
+.pressed{transform: translateY(1px) scale(.985) !important; filter: saturate(1.2) !important;}
+
+/* ====== NO BLOB HALO (patched v10) ====== */
+/* Remove any extra glow/blur layers that can look like a separate hero overlay */
+.siriHalo, .orbHalo, .orbWave{ display:none !important; opacity:0 !important; filter:none !important; }
+
+/* kill shadows/filters on blob containers */
+.orb, .siriBlob, .siriBlob__core, .blobCanvas, .orbFallback{
+  box-shadow: none !important;
+  filter: none !important;
+}
+
+/* remove pseudo "skin" + edge glow layers */
+.orb::before, .orb::after,
+.siriBlob__core::before, .siriBlob__core::after{
+  content: none !important;
+  display: none !important;
+}
+</style>
 </head>
 <body>
 <!-- removed ambient light layer to keep background continuous -->
