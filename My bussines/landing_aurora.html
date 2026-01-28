@@ -220,6 +220,7 @@
       box-shadow:none;
       margin-top:14px;
     }
+    .blobImg{width:100%;height:100%;object-fit:contain;display:block;filter:none!important;mix-blend-mode:normal;opacity:1;}
     @media (max-width: 920px){
       .scene{height:460px;}
     }
@@ -357,27 +358,6 @@
     }
 
     /* Emitted message bubbles */
-    .orbEmit{
-      position:absolute; inset:0;
-      pointer-events:none;
-    }
-    .orbBubble{
-      position:absolute;
-      left:50%; top:50%;
-      width:min(320px, 72vw);
-      transform: translate(-50%, -50%);
-      background: rgba(12,20,40,.40);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 18px;
-      padding: 12px 14px;
-      color: rgba(255,255,255,.92);
-      box-shadow: 0 18px 60px rgba(0,0,0,.35);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      display:flex; gap:10px; align-items:flex-start;
-      animation: bubbleOut 2.8s ease forwards;
-      transform-origin: 0% 50%;
-    }
     .orbBubble .dot{
       width:10px; height:10px; border-radius:50%;
       margin-top:6px;
@@ -401,15 +381,6 @@
       animation: waveOut 2.8s ease forwards;
       mix-blend-mode: screen;
     }
-
-    @keyframes bubbleOut{
-      0%{ opacity:0; transform: translate(-50%,-50%) scale(.92); }
-      10%{ opacity:1; }
-      60%{ opacity:1; transform: translate(-50%,-78%) scale(1); }
-      100%{ opacity:0; transform: translate(-50%,-110%) scale(.98); }
-    }
-    @keyframes waveOut{
-      0%{ opacity:0; transform: translate(-50%,-50%) scale(.85); }
       12%{ opacity:.75; }
       70%{ opacity:.55; transform: translate(-50%,-70%) scale(1.05); }
       100%{ opacity:0; transform: translate(-50%,-92%) scale(1.15); }
@@ -775,13 +746,10 @@ body{
 .brandLogo{width:30px; height:30px; display:block; border-radius:10px; filter: drop-shadow(0 10px 22px rgba(0,220,255,.26)) saturate(1.2)}
 .brandText{font-size: 15px; opacity:.94}
 
-.pressed{transform: translateY(1px) scale(.985) !important; filter: saturate(1.2) !important;}
-    /* ===== HERO BLOB: HALO/OFFLOAD PATCH (v11) ===== */
-    #hero .orbCanvas{ display:none !important; }
-    #hero .orbField{ isolation:auto !important; background:transparent !important; backdrop-filter:none !important; }
-    #hero .orbFallback{ filter:none !important; box-shadow:none !important; }
-    #hero .orbFallback::before, #hero .orbFallback::after{ content:none !important; display:none !important; }
-
+.pressed{transform: translateY(1px) scale(.985) !important; filter: saturate(1.2) !important;}    /* Speed + clean blob: no halo/no extra hero layer */
+    #hero .scene{background:transparent!important; box-shadow:none!important; filter:none!important; backdrop-filter:none!important;}
+    #hero .scene::before,#hero .scene::after{content:none!important; display:none!important;}
+    #hero .blobImg{filter:none!important;}
 </style>
 </head>
 <body>
@@ -1077,17 +1045,28 @@ document.addEventListener('pointerdown', (e)=>{
 
     
     // ===== 3D Venom-Blob (Three.js) =====
-    // Disabled for performance + to remove hero-only halo layer.
     (function(){
       const canvas = document.getElementById('orbCanvas');
+      const field = canvas?.closest('.orbField');
       const fallbackImg = document.getElementById('orbFallback');
-      if(canvas){ canvas.style.display = 'none'; }
-      if(fallbackImg){
-        fallbackImg.style.filter = 'none';
-        fallbackImg.style.opacity = '1';
-      }
-    })();
-;
+      if(!canvas || !field) return;
+
+      const prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const isSmall = window.matchMedia && window.matchMedia('(max-width: 520px)').matches;
+      const isMed = window.matchMedia && window.matchMedia('(max-width: 920px)').matches;
+
+      // crude low-end heuristic for performance-friendly mobile
+      const cores = navigator.hardwareConcurrency || 4;
+      const mem = navigator.deviceMemory || 4;
+      const lowEnd = isSmall || cores <= 4 || mem <= 4;
+
+      // WebGL support check
+      const canWebGL = (function(){
+        try{
+          const c = document.createElement('canvas');
+          return !!(window.WebGLRenderingContext && (c.getContext('webgl') || c.getContext('experimental-webgl')));
+        }catch(e){ return false; }
+      })();
 
       if(!canWebGL || prefersReduced){
         // Use image fallback (keeps the "from another world" vibe, no perf hit)
