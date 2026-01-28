@@ -228,10 +228,11 @@
     }
 
     .orbField{
-      position:absolute; inset:0;
-      display:flex; align-items:center; justify-content:center;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
       pointer-events:none;
-      isolation:isolate;
     }
 
     .orbCanvas{
@@ -247,7 +248,7 @@
       width:min(380px, 68vw);
       height:auto;
       display:none;
-      filter: drop-shadow(0 0 42px rgba(80,190,255,.35));
+      filter:none !important;
       opacity:.98;
       pointer-events:none;
       transform: translateZ(0);
