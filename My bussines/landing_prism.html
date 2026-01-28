@@ -57,10 +57,9 @@
       content:"";
       position:absolute; inset:-120px;
       background:
-        radial-gradient(900px 600px at 50% 20%, rgba(var(--a2),.14), transparent 62%),
-        radial-gradient(720px 520px at 10% 70%, rgba(var(--a1),.10), transparent 62%),
-        radial-gradient(760px 520px at 90% 75%, rgba(var(--a3),.10), transparent 62%),
-        linear-gradient(180deg, rgba(0,0,0,.22), rgba(0,0,0,.66));
+	        radial-gradient(900px 600px at 50% 20%, rgba(var(--a2),.14), transparent 62%),
+	        radial-gradient(720px 520px at 10% 70%, rgba(var(--a1),.10), transparent 62%),
+	        radial-gradient(760px 520px at 90% 75%, rgba(var(--a3),.10), transparent 62%);
       filter: blur(0px);
       opacity:1;
       transform: translateZ(0);
@@ -779,7 +778,7 @@ body{
 .pressed{transform: translateY(1px) scale(.985) !important; filter: saturate(1.2) !important;}</style>
 </head>
 <body>
-<div aria-hidden="true" class="lightSpots"></div>
+<!-- removed ambient light layer to keep background continuous -->
 <div aria-hidden="true" class="safeTop"></div>
 <div class="bg"></div>
 <header class="nav">
@@ -813,10 +812,7 @@ body{
             Drop in a clean chat widget. Reply instantly in multiple languages.
             Every conversation lands in one simple inbox — with analytics you can grow into.
           </p>
-<div class="heroActions">
-<a class="btn btnPrimary" href="/widget"><span class="dotLive"></span> Watch live widget demo</a>
-<a class="btn" href="#features">See capabilities</a>
-</div>
+<!-- removed extra hero CTAs (kept primary CTA in nav) -->
 </div>
 <div aria-label="Live capability scene" class="scene">
 <div aria-hidden="true" class="orbField">
